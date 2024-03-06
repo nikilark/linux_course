@@ -1,112 +1,136 @@
-## Chapter 4: Пристрої в Linux
-### Device Files
-Most devices on a Unix system because the kernel presents many of the device I/O interfaces to user processes as files.
+## Розділ 4: Пристрої в Linux
+### Файли пристроїв
+Більшість пристроїв у системі Unix доступні через спеціальні файли, оскільки ядро представляє багато інтерфейсів вводу/виводу пристроїв для процесів користувача у вигляді файлів.
 
-Some devices are also accessible to standard programs like `cat`, although not all devices or device capabilities are accessible with standard file I/O. If you list the contents of _/dev_, the first letter displayed would tell you the type of device:
+З деякими пристроями можна взаємодіяти за допомогою стандартних програм, таких як `cat`, хоча не всі пристрої чи можливості пристроїв доступні за допомогою стандартного файлового введення/виведення. 
 
-- Block device (b): Programs access data from a block device in fixed chunks (like disc devices)
-- Character device (c): Works with data streams. You can only read/write characters from/to character devices. 
+![Пристрої в Linux](images/ls_dev.png)
 
-Character devices don’t have a size; when you read from or write to one, the kernel usually performs a read or write operation on the device (like printers). During character device interaction, the kernel cannot back up and reexamine the data stream after it has passed data to a device or process
-- Pipe devices (p): like character devices, with another process at the other end of the I/O stream instead of a kernel driver
-- Socket device (s): special-purpose interfaces that are frequently used for interprocess communication
+Якщо ви перерахуєте вміст `/dev`, перша відображена літера вкаже вам тип пристрою:
+
+- Блоковий пристрій (`b`): Програми отримують доступ до даних із блокового пристрою фіксованими фрагментами (наприклад як дискові пристрої)
+- Символьний пристрій (`c`): працює з потоками даних. Ви можете лише читати/записувати символи з/на символьні пристрої.
+
+    Символьні пристрої не мають розміру; коли ви читаєте або записуєте в один з них, ядро зазвичай виконує операцію читання або запису на пристрої (як принтери). Під час взаємодії з символьним пристроєм ядро не може створити резервну копію та повторно перевірити потік даних після того, як воно передало дані на пристрій або процес
+
+- Пристрої конвеєра (`p`): схожі на символьні пристрої, з іншим процесом на іншому кінці потоку введення-виведення замість драйвера ядра
+- Socket (`s`): інтерфейс спеціального призначення, який часто використовуються для міжпроцесного зв’язку
     
-### The sysfs Device Path
-The kernel assigns devices in the order in which they are found, so a device may have a different name between reboots.
+### Шлях пристроїв sysfs
+Ядро призначає файли пристроям в тому порядку, в якому вони знайдені, тому пристрій може мати іншу назву між перезавантаженнями.
 
-The Linux kernel offers the sysfs interface through a system of files and directories to provide a uniform view for attached devices based on their actual hardware attributes. The base path for devices is _/sys/devices_.
+Ядро Linux пропонує інтерфейс `sysfs` через систему файлів і каталогів для забезпечення єдиного перегляду підключених пристроїв на основі їхніх фактичних апаратних атрибутів. Основним шляхом для пристроїв є `/sys/devices`.
 
-There are a few shortcuts in the _/sys_ directory. _/sys/block_ should contain all of the block devices available on a system. To find the sysfs location of a device in _/dev_ use the `udevadm` command:
+![sysfs device entry](images/ls_sys_device.png)
+
+У каталозі `/sys` є кілька ярликів. `/sys/block` має містити всі блокові пристрої, доступні в системі. Щоб знайти розташування `sysfs` пристрою в `/dev`, використовуйте команду `udevadm`:
 
 `udevadm info --query=all --name=/dev/sda`
 
-### dd and Devices
-The program dd is extremely useful when working with block and character devices, its function is to read from an input file or stream and write to an output file or stream (dd copies data in blocks of a fixed size).
+### `dd` і пристрої
+Програма `dd` надзвичайно корисна під час роботи з блоковими та символьними пристроями, її функція полягає в читанні з вхідного файлу або потоку та записі у вихідний файл або потік (dd копіює дані в блоках фіксованого розміру).
 
-Usage: 
+Використання:
 `dd if=/dev/zero of=new_file bs=1024 count=1`
 
-### device name summary
-It can sometimes be difficult to find the name of a device. Some common Linux devices and their naming conventions are:
+### Імена пристроїв
+Іноді буває важко знайти назву пристрою. Нижче наведено деякі поширені пристрої Linux і правила їх іменування:
 
-#### Hard Disks: /dev/sd*
-These devices represent entire disks; the kernel makes separate device files, such as _/dev/sda1_ and _/dev/sda2_, for the partitions on a disk.
+#### Жорсткі диски: `/dev/sd*`
+Ці пристрої являють собою цілі диски; ядро створює окремі файли пристроїв, такі як `/dev/sda1` і `/dev/sda2`, для розділів на диску.
 
-The sd portion of the name stands for SCSI disk (Small Computer System Interface). To list the SCSI devices on your system, use a utility that walks the device paths provided by sysfs.
+![Пристрої SCSI](images/lsscsi.png)
 
-![SCSI devices](images/Figure3-1.png)
+Частина назви sd означає диск `SCSI` (Small Computer System Interface). Щоб отримати список пристроїв SCSI у вашій системі, скористайтеся утилітою, яка переглядає шляхи пристроїв, надані sysfs.
 
-Most modern Linux systems use the Universally Unique Identifier (UUID) for persistent disk device access.
+Більшість сучасних систем Linux використовують універсальний унікальний ідентифікатор (`UUID`) для постійного доступу до дискового пристрою.
 
-#### CD and DVD Drives: /dev/sr*
-The /dev/sr* devices are read only, and they are used only for reading from discs.
+#### Приводи CD і DVD: `/dev/sr*`
+Пристрої `/dev/sr*` доступні в режимі read only, і вони використовуються лише для читання з дисків.
 
-#### PATA Hard Disks: /dev/hd*
-The Linux block devices /dev/hd* are common on older versions of the Linux kernel and with older hardware.
+#### Жорсткі диски PATA: `/dev/hd*`
+Блокові пристрої Linux `/dev/hd*` є звичайними для старих версій ядра Linux і зі старішим апаратним забезпеченням.
 
-#### Terminals: /dev/tty*, /dev/pts/*, and /dev/tty
-Terminals are devices for moving characters between a user process and an I/O device, usually for text output to a terminal screen. Pseudoterminal devices are emulated terminals that understand the I/O features of real terminals. 
+#### Термінали: `/dev/tty*`, `/dev/pts/*` і `/dev/tty`
+Термінали — це пристрої для переміщення символів між процесом користувача та пристроєм введення/виведення, зазвичай для виведення тексту на екран терміналу. Псевдотермінали — це емульовані термінали, які розуміють функції введення/виведення реальних терміналів.
 
-Two common terminal devices are _/dev/tty1_ (the first virtual console) and _/dev/pts/0_ (the first pseudoterminal device).
+Два поширені термінальні пристрої: `/dev/tty1` (перша віртуальна консоль) і `/dev/pts/0` (перший псевдотермінальний пристрій).
 
-The /dev/tty device is the controlling terminal of the current process. If a program is currently reading and writing to a terminal, this device is a synonym for that terminal. A process does not need to be attached to a terminal.
+Пристрій `/dev/tty` є керуючим терміналом поточного процесу. Якщо програма зараз читає та записує на термінал, цей пристрій є синонімом цього терміналу. Процес не потрібно приєднувати до терміналу.
 
-Linux has two primary display modes: text mode and an X Window System server (graphics mode). You can switch between the different virtual environments with the ctrl-alt-Function keys.
+Linux має два основних режими відображення: текстовий режим і сервер X Window System (графічний режим). Ви можете перемикатися між різними віртуальними середовищами за допомогою клавіш ctrl-alt-Function.
 
-#### Parallel Ports: /dev/lp0 and /dev/lp1
-Representing an interface type that has largely been replaced by USB.
+#### Паралельні порти: `/dev/lp0` і `/dev/lp1`
+Представляє тип інтерфейсу, який значною мірою був замінений новішим USB.
 
-You can send files (such as a file to be printed) directly to a parallel port with the cat command.
+Ви можете надсилати файли (наприклад, файл для друку) безпосередньо на паралельний порт за допомогою команди `cat`.
 
-#### Audio Devices: /dev/snd/*, /dev/dsp, /dev/audio, and More
-Linux has two sets of audio devices. There are separate devices for the Advanced Linux Sound Architecture (ALSA in _/dev/snd_) system interface and the older Open Sound System (OSS).
+#### Аудіопристрої: `/dev/snd/*`, `/dev/dsp`, `/dev/audio` тощо
+Linux має два набори аудіопристроїв. Існують окремі пристрої для системного інтерфейсу Advanced Linux Sound Architecture (ALSA в `/dev/snd`) і старішої Open Sound System (OSS).
 
-#### Creating Device Files
-The mknod command creates one device (deprecated). You must know the device name as well as its major and minor numbers. 
+#### Створення файлу пристрою
+Команда `mknod` створює один пристрій (вже вважається застарілим). Ви повинні знати назву пристрою, а також його основні та додаткові номери.
 
-### udev
-The Linux kernel can send notifications to a user-space process (named udevd) upon detecting a new device on the system.
+### `udev`
+Ядро Linux може надсилати сповіщення спеціальному процесу простору користувача (під назвою `udevd`) після виявлення нового пристрою в системі.
 
-The user-space process on the other end examines the new device’s characteristics, creates a device file, and then performs any device initialization.
+Процес простору користувача на іншому кінці перевіряє характеристики нового пристрою, створює файл пристрою, а потім виконує будь-яку ініціалізацію пристрою.
 
-#### devtmpfs
-The devtmpfs filesystem was developed in response to the problem of device availability during boot. This filesystem is similar to the older devfs support, but it’s simplified.
+#### `devtmpfs`
+Файлова система `devtmpfs` була розроблена у відповідь на проблему доступності пристрою під час завантаження. Ця файлова система схожа на старішу `devfs`, але вона спрощена.
 
-The kernel creates device files as necessary, but it also notifies udevd that a new device is available.
+За потреби ядро створює файли пристрою, але також сповіщає `udevd` про те, що новий пристрій доступний.
  
-#### udevd Operation and Configuration
-The udevd daemon operates as follows:
+#### `udevd` Робота та конфігурація
 
-    1. The kernel sends udevd a notification event, called a uevent, through an internal network link
-    2. udevd loads all of the attributes in the uevent
-    3. udevd parses its rules, and it takes actions or sets more attributes based on those rules
+![udev event](images/udev_event.png)
 
-#### udevadm
-The udevadm program is an administration tool for udevd.
+Демон `udevd` працює таким чином:
 
-You can reload udevd rules and trigger events, but perhaps the most powerful features of udevadm are the ability to search for and explore system devices and the ability to monitor uevents as udevd receives them from the kernel.
 
-#### Monitoring Devices
-To monitor uevents with udevadm, use the monitor command: `udevadm monitor`
+1. Ядро надсилає `udevd` сповіщення, що називається `uevent`, через внутрішній канал мережі
+2. `udevd` завантажує всі атрибути в `uevent`
+3. `udevd` аналізує свої правила, і виконує дії або встановлює додаткові атрибути на основі цих правил
 
-### in-depth: scsi and the linux kernel
-The traditional SCSI hardware setup is a host adapter linked with a chain of devices over an SCSI bus. This adapter is attached to a computer, the host adapter and devices each have an SCSI ID and there can be 8 or 16 IDs per bus, depending on the SCSI version.
+![udev rules](images/udev_rules.png)
 
-The host adapter communicates with the devices through the SCSI command set in a peer-to-peer relationship; the devices send responses back to the host adapter. 
+![udev export](images/udev_export.png)
 
-The SCSI subsystem and its three layers of drivers can be described as:
+#### `udevadm`
+Програма `udevadm` є інструментом адміністрування `udevd`.
+
+![udevadm](images/udevadm.png)
+
+Ви можете перезавантажувати правила `udevd` і запускати події, але, мабуть, найпотужнішими функціями `udevadm` є можливість шукати та досліджувати системні пристрої та можливість відстежувати події `udevd`, коли `udevd` отримує їх від ядра.
+
+#### Пристрої моніторингу
+Щоб контролювати `uevent`s за допомогою `udevadm`, використовуйте команду monitor: `udevadm monitor`
+
+![udevadm monitor](images/udevadm_monitor.png)
+
+### Поглиблено: `scsi` і ядро Linux
+Традиційне обладнання SCSI — це адаптер хоста, з’єднаний із ланцюгом пристроїв через шину SCSI. Цей адаптер під’єднується до комп’ютера, хост-адаптер; пристрої мають ідентифікатор SCSI; на шину може бути 8 або 16 ідентифікаторів залежно від версії SCSI.
+
+![Пристрої SCSI](images/Figure3-1.png)
+
+Хост-адаптер спілкується з пристроями через набір команд SCSI у одноранговому зв’язку; пристрої надсилають відповіді назад до хост-адаптера.
+
+Підсистему SCSI та її три рівні драйверів можна описати так:
     
-- The top layer handles operations for a class of device
-- The middle layer moderates and routes the SCSI messages between the top and bottom layers, and keeps track of all of the SCSI buses and devices attached to the system
-- The bottom layer handles hardware-specific actions. The drivers here send outgoing SCSI protocol messages to specific host adapters or hardware, and they extract incoming messages from the hardware
+- Верхній рівень обробляє операції для класу пристроїв
+- Середній рівень модерує та направляє повідомлення SCSI між верхнім і нижнім рівнями, а також відстежує всі шини SCSI та пристрої, підключені до системи.
+- Нижній рівень обробляє специфічні апаратні дії. Драйвери тут надсилають вихідні повідомлення протоколу SCSI до певних хост-адаптерів або апаратного забезпечення та витягують вхідні повідомлення з апаратного забезпечення
 
-#### USB Storage and SCSI
-USB is quite similar to SCSI—it has device classes, buses, and host controllers.
+![Робота з пристроями SCSI](images/Figure3-2.png)
 
-The Linux kernel includes a three-layer USB subsystem that closely resembles the SCSI subsystem, with device-class drivers at the top, a bus management core in the middle, and host controller drivers at the bottom.
+#### USB накопичувач і SCSI
+USB дуже схожий на SCSI — він має класи пристроїв, шини та хост-контролери.
 
-#### SCSI and ATA
-To connect the SATA-specific drivers of the kernel to the SCSI subsystem, the kernel employs a bridge driver, as with the USB drives.
+Ядро Linux містить трирівневу підсистему USB, яка дуже нагадує підсистему SCSI, з драйверами класу пристроїв у верхній частині, ядром керування шиною посередині та драйверами хост-контролера внизу.
 
-The optical drive speaks ATAPI, a version of SCSI commands encoded in the ATA protocol. 
- 
+#### SCSI та ATA
+Щоб підключити драйвери SATA ядра до підсистеми SCSI, ядро використовує драйвер моста, як і з USB-накопичувачами.
+
+Оптичний привід підтримує ATAPI, версію команд SCSI, закодовану в протоколі ATA.
+
+![Множинний доступ до файлу пристроя](images/Figure3-3.png)
