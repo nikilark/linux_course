@@ -2,27 +2,27 @@
 
 Простір користувача починається приблизно в цьому порядку:
 
-1. init
+1. Ядро запускає процес `init`
 
-1. Основні служби низького рівня, такі як `udevd` та `syslogd`
+1. Запускаються основні служби низького рівня, такі як `udevd` та `syslogd`
 
-1. Конфігурація мережі
+1. Проходить конфігурація мережі
 
-1. Служби середнього рівня та високого рівня (`cron`, `printing` тощо)
+1. Запускаються служби середнього рівня та високого рівня (`cron`, `printing` тощо)
 
-1. Запрошення на вхід, GUI та інші високорівневі програми
+1. З'являється запрошення на вхід, GUI та інші високорівневі програми
 
 ### Вступ до `init`
 
-Програма `init` -- це програма простору користувача, як і будь-яка інша програма в системі Linux, і ви знайдете її в _/sbin_ разом з іншими системними бінарними файлами. Основна її мета - запускати та зупиняти основні службові процеси в системі.
+Програма `init` — це програма простору користувача, як і будь-яка інша програма в системі Linux, і ви знайдете її в _/sbin_ разом з іншими системними бінарними файлами. Основна її мета - запускати та зупиняти основні службові процеси в системі.
 
 Є три основні реалізації:
 
-- _System V init_: традиційна init (RHEL та інші)
+- _System V init_: традиційна `init` (RHEL та інші)
 
-- _systemd_: новий стандарт для init
+- _systemd_: новий стандарт для `init`
 
-- _Upstart_: колишня реалізація init на Ubuntu (замінена на systemd)
+- _Upstart_: колишня реалізація `init` на Ubuntu (замінена на _systemd_)
 
 #### Завдання та принципи роботи
 
@@ -50,22 +50,6 @@
 - У 2010 році було представлено _systemd_, створену Леннартом Поттерінгом (Lennart Poettering), Кай Зіверс (Kay Siever) і колективом розробників (Red Hat). Це цілісна система ініціалізації, яка забезпечує паралельне завантаження, поліпшене логування, управління залежностями, автоматичну активацію служб під час запиту, засоби налагодження та моніторингу, а також інші додаткові функції. Стала
 основною для багатьох дистрибутивів Linux, зокрема Ubuntu.
 
-### System V Runlevels
-
-At any given time on a Linux system, a certain base set of processes (such as crond and udevd) is running. In System V init, this state of the machine is called its runlevel, which is denoted by a number from 0 through 6. You can check your system’s runlevel with the `who -r` command.
-
-### Identifying your init
-
-- If your system has `/usr/lib/systemd` and `/etc/systemd` directories, you have _systemd_
-
-- If you have an `/etc/init` directory that contains several `.conf` files, you’re probably running _Upstart_
-
-- If neither of the above is true, but you have an `/etc/inittab` file, you’re probably running _System V init_
-
-### systemd
-
-The systemd init handles the regular boot process and aims to incorporate a number of standard Unix services (cron, inetd). It has the ability to defer the start of services and operating system features until they are necessary.
-
 ### System V RunLevels
 
 У будь-який момент часу в системі Linux виконується певний базовий набір процесів (наприклад, `crond` і `udevd`). В ініціалізації System V цей стан машини називається її рівнем запуску (_RunLevel_), який позначається числом від 0 до 6. Ви можете перевірити рівень запуску вашої системи за допомогою команди `who -r`.
@@ -80,11 +64,18 @@ The systemd init handles the regular boot process and aims to incorporate a numb
 
 ### systemd
 
+Systemd — центральна система ініціалізації та управління службами. Вона обробляє все, що виходить за рамки завдань ядра із запуску та
+управління системою.
+
 `systemd init` керує процесом завантаження системи та має на меті об’єднати ряд стандартних служб Unix (`cron`, `inetd`). Він також вміє відкладати запуск служб і функцій операційної системи, поки вони не знадобляться.
+
+![systemd](./images/systemd.png)
+
+Система ініціалізації _systemd_ використовується в CentOS-7+, Debian-8+, Ubuntu-15.04+, Fedora15+, openSUSE 12.1+.
 
 #### Переваги _systemd_
 
-- Просунута підтримка паралельного запуску служб;
+- Краща підтримка паралельного запуску служб;
 
 - Більш широкий набір функцій управління та моніторингу;
 
@@ -94,25 +85,15 @@ The systemd init handles the regular boot process and aims to incorporate a numb
 
 Подобнім функціональним аналгом у Windows є підсистема "Service Control Manager (SCM)" та її утиліти sc start , sc stop , sc query та інші.
 
-#### Підсистема systemd
-
-Systemd — центральна система ініціалізації та управління службами. Вона обробляє все, що виходить за рамки завдань ядра із запуску та
-управління системою.
-
-![systemd](./images/systemd.png)
-
-Система ініціалізації _systemd_ використовується в CentOS-7+, Debian-8+, Ubuntu-15.04+, Fedora15+, openSUSE 12.1+.
-
 ### Базові поняття та терміни
 
-Концепция _systemd_ базируется на управлении "юнитами" (unit). Через них описуються різні компоненти і стани системи, визначаються залежності та контролюється їхній запуск, зупинка і взаємодія.
+Концепція _systemd_ базується на керуванні "юнітами" (unit). Через них описуються різні компоненти і стани системи, визначаються залежності та контролюється їхній запуск, зупинка і взаємодія.
 
-    Unit — основна одиниця управління _systemd_.Це конфігураційний файл, що описує системний об'єкт: процес, ресурс або стан системи.
+    Unit — основна одиниця управління systemd. Це конфігураційний файл, що описує системний об'єкт: процес, ресурс або стан системи.
 
 #### Базові типи юнітів
 
-`.target` — (цільовий стан) абстракція, що групує інші юніти і визначає стан системи, що виникає під час запуску або перемикання
-режимів.
+`.target` — (цільовий стан) абстракція, що групує інші юніти і визначає стан системи, що виникає під час запуску або перемикання режимів.
 
 ```bash
 # Перегляд усіх наявних у системі "Target Unit"
@@ -142,7 +123,7 @@ systemctl list-units --all --type=service
 
 - `nginx.service` — "A high performance web server and a reverse proxy server"
 
-`.timer` — (таймер завдань), заміна й аналог cron, визначає час запуску та інтервали повторення для виконання інших юнітів.
+`.timer` — (таймер завдань), заміна й аналог `cron`, визначає час запуску та інтервали повторення для виконання інших юнітів.
 
 ```bash
 # Перегляд усіх наявних у системі "Timer Unit"
@@ -157,7 +138,7 @@ systemctl list-units --all --type=timer
 
 - `mdmonitor-oneshot.timer` — "Reminder for degraded MD arrays"
 
-`.mount` — (монтуємий ресурс), визначає диск або мережеву папку, тип файлової системи, точку монтування та інші параметри.
+`.mount` — (ресурс, що монтується), визначає диск або мережеву папку, тип файлової системи, точку монтування та інші параметри.
 
 ```bash
 # Перегляд усіх наявних у системі "Mount Unit"
@@ -181,14 +162,11 @@ systemctl list-units --all --type=mount
 systemctl list-sockets
 ```
 
-`.path` — (юніт шляху), дає змогу відстежувати зміни у файлах або директоріях і реагувати на них, активуючи пов'язані сервіси або інші
-юніти.
+`.path` — (юніт шляху), дає змогу відстежувати зміни у файлах або директоріях і реагувати на них, активуючи пов'язані сервіси або інші юніти.
 
-`.slice` — (юніт зрізу), описує групу процесів або інших юнітів для застосування до них політик управління ресурсами процесора,
-пам'яті або введення-виведення.
+`.slice` — (юніт зрізу), описує групу процесів або інших юнітів для застосування до них політик управління ресурсами процесора, пам'яті або введення-виведення.
 
-`.device` — (юніт пристрою), абстракція над фізичним або віртуальним пристроєм для налаштування параметрів, права доступу та
-залежностей від інших юнітів.
+`.device` — (юніт пристрою), абстракція над фізичним або віртуальним пристроєм для налаштування параметрів, права доступу та залежностей від інших юнітів.
 
 Ще бувають: `.automount` , `.swap` , `.scope` , `.snapshot` та інші.
 
@@ -212,7 +190,7 @@ systemctl list-sockets
 
 Для вирішення такого широкого спектра завдань потрібен комплексний набір програмних компонентів. Залежно від версії до набору _systemd_ входить кілька десятків виконуваних файлів і скриптів.
 
-    Критика: Те, що колись оброблялося окремими інструментами, у _systemd_ стало «all-in-one solution», це викликало невдоволення прихильників філософії «one tool, one job» (один інструмент — одне завдання).
+    Критика: Те, що колись оброблялося окремими інструментами, у systemd стало «all-in-one solution», це викликало невдоволення прихильників філософії «one tool, one job» (один інструмент — одне завдання).
 
 ![Архітектура _systemd_](images/systemd_arch.png)
 
@@ -276,13 +254,13 @@ systemctl list-sockets
 
     - мінімальне оточення для налагодження та відновлення системи
 
-    - являє собою (target) для відновлення системи. Він надає в разі проблем.
+    - являє собою _target_ для відновлення системи. Він надає в разі проблем.
 
 Це тільки частина компонентів _systemd_, є ще безліч інших компонентів і функцій, які сприяють ефективному управлінню системою, включно з управлінням контейнерами, плануванням завдань, моніторингом та іншим.
 
 #### Процес запуску
 
-Проект _systemd_ пропонує свій власний завантажувач `systemd-boot` (раніше відомий як _gummiboot_). Це простий завантажувач для систем з UEFI, він може спростити управління завантаженням і скоротити час завантаження. Однак більшість диструтивів за замовчуванням використовують просунутий Grub.
+Проект _systemd_ пропонує свій власний завантажувач `systemd-boot` (раніше відомий як _gummiboot_). Це простий завантажувач для систем з UEFI, він може спростити управління завантаженням і скоротити час завантаження. Однак більшість диструтивів за замовчуванням використовують _grub_.
 
 Незалежно від обраного завантажувача, його основне завдання — завантажити ядро і передати йому управління. Ядро ініціалізує залізо, налаштовує драйвери пристроїв і створює кореневу файлову систему. Після цього управління передається _systemd_ (`/lib/systemd/systemd`), яка є першим процесом (`PID=1`), що запускається в користувацькому просторі.
 
@@ -298,8 +276,6 @@ systemctl list-sockets
 1. Після успішної активації всіх необхідних юнітів і служб створюються й активуються користувацькі інтерфейси (консоль та графіка).
 
 #### Конфігураційні каталоги
-
-В _systemd_ используюются специальные каталоги для размещения файлов конфигураций для юнитов. Эти каталоги предназначены для расширения и переопределения конфигураций по умолчанию, предоставляемых самим systemd. Структура:
 
 _systemd_ використовує спеціальні каталоги для розміщення файлів конфігурації для юнітів. Ці каталоги розроблені для розширення та перевизначення конфігурацій за замовчуванням, наданих самою _systemd_. Структура:
 
@@ -317,240 +293,230 @@ _systemd_ використовує спеціальні каталоги для 
 
 ## Адміністрування _systemd_
 
-### Команда systemctl
+### Команда `systemctl`
 
-Синтаксис: systemctl [OPTIONS] COMMAND [UNIT]
+Синтаксис: `systemctl [OPTIONS] COMMAND [UNIT]`
 
 Без опцій і підкоманд відображає список усіх зареєстрованих юнітів.
 
 Розшифровка полів:
 
-```
-UNIT — ім'я юніта
-LOAD — інформує про успішне завантаження конфігурації
-ACTIVE — чи активний юніт
-SUB — більш детальна системна інформація про юніт
-DESCRIPTION — короткий опис
-```
+- _UNIT_ — ім'я юніта
+
+- _LOAD_ — інформує про успішне завантаження конфігурації
+
+- _ACTIVE_ — чи активний юніт
+
+- _SUB_ — більш детальна системна інформація про юніт
+
+- _DESCRIPTION_ — короткий опис
+
 #### Перегляд довідки
 
-```
+```bash
 systemctl - -help — інтегровані команди
 ```
-```
+
+```bash
 systemctl help — документація щодо юніту
 ```
-Синтаксис: systemctl help PATTERN|PID
+
+Синтаксис: `systemctl help PATTERN|PID`
 
 #### Перегляд інформації
 
-```
-systemctl list-units — списки юнітів
-```
-Синтаксис: systemctl list-units [OPTIONS] [PATTERN]
 
-```
-systemctl list-unit-files — встановлені модульні файли
-```
-Синтаксис: systemctl list-unit-files [PATTERN]
+- `systemctl list-units` — списки юнітів
 
-```
-systemctl show — перевірка властивостей модуля
-```
-Синтаксис: systemctl show [PATTERN|JOB]
+Синтаксис: `systemctl list-units [OPTIONS] [PATTERN]`
 
-```
+```bash
 # Дивимося всі `units`, навіть не завантажені через помилки
-systemctl list-units - -all
-```
-```
+systemctl list-units --all
+
 # Відобразити тільки активні служби
-systemctl list-units - -type = service - -state = running
-```
-```
+systemctl list-units --type=service --state=running
+
 # Відобразити тільки неактивні `units`
-systemctl list-units - -all --state = inactive
-```
-```
+systemctl list-units --all --state=inactive
+
 # Відобразити юніти, які не запустилися
-systemctl list-units - -state = failed
+systemctl list-units --state=failed
 ```
-```
+
+- `systemctl list-unit-files` — встановлені модульні файли
+
+Синтаксис: `systemctl list-unit-files [PATTERN]`
+
+```bash
 # Повний список
 systemctl list-unit-files
-```
-```
+
 # Вибіркові звіти
 systemctl list-unit-files ssh.service
-systemctl list-unit-files * user *
+systemctl list-unit-files *user*
 ```
-```
+
+- `systemctl show` — перевірка властивостей модуля
+
+Синтаксис: `systemctl show [PATTERN|JOB]`
+
+```bash
 # Перегляд усіх опцій
 systemctl show ssh.service
-```
-```
+
 # Вибірково відобразити одну властивість
-systemctl show ssh.service - p ExecMainStartTimestamp
+systemctl show ssh.service -p ExecMainStartTimestamp
 ```
 
-```
-systemctl list-dependencies — залежності
-```
-Синтаксис: systemctl list-dependencies [UNIT]
+- `systemctl list-dependencies` — залежності
 
-#### Перевірки статусу
+Синтаксис: `systemctl list-dependencies [UNIT]`
 
-```
-systemctl status — розширений статус виконання
-```
-Синтаксис: systemctl status [PATTERN|PID]
-
-```
-systemctl is-enabled / is-active / is-failed — прапор статусу
-```
-Синтаксис: systemctl is-active / is-failed / is-enabled [UNIT]
-
-#### Керування статусами сервісів
-
-Синтаксис: systemctl start / stop / restart [SERVICE]
-
-```
-systemctl start — запуск
-```
-```
-systemctl stop — зупинка
-systemctl restart — перезапуск
-```
-#### Керування автозапуском
-
-Синтаксис: systemctl enable / disable [SERVICE]
-
-```
-systemctl enable — увімкнути автозапуск
-systemctl disable — вимкнути автозапуск
-```
-### Працюємо з "Service Unit"
-
-Для вивчення команд і принципів управління будемо використовувати NGINX.
-
-#### Загальна структура
-
-```
-systemctl cat — перегляд конфігурації
-```
-Синтаксис: systemctl cat UNIT|PATTERN
-
-Розберемо всі опції конфігураційного файла:
-
-```
+```bash
 # Відобразити залежності зазначеного юніта
 systemctl list-dependencies ssh.service
 systemctl list-dependencies multi-user.target
 systemctl list-dependencies rescue.target
 ```
-```
-# Выполняется с помощью опции is-active
+
+#### Перевірки статусу
+
+- `systemctl status` — розширений статус виконання
+
+Синтаксис: `systemctl status [PATTERN|PID]`
+
+```bash
+# Виконується за допомогою опції is-active
 systemctl status ssh.service
 ```
-```
+
+- `systemctl is-enabled / is-active / is-failed` — прапор статусу
+
+Синтаксис: `systemctl is-active / is-failed / is-enabled [UNIT]`
+
+```bash
 # Статус сервісу, зручно використовувати в скриптах
 systemctl is-active ssh.service; echo $?
 systemctl is-failed rescue.target; echo $?
 systemctl is-enabled nginx.service; echo $?
 ```
-```
+
+#### Керування статусами сервісів
+
+Синтаксис: `systemctl start / stop / restart [SERVICE]`
+
+- `systemctl start` — запуск
+
+- `systemctl stop` — зупинка
+
+- `systemctl restart` — перезапуск
+
+#### Керування автозапуском
+
+Синтаксис: `systemctl enable / disable [SERVICE]`
+
+- `systemctl enable` — увімкнути автозапуск
+
+- `systemctl disable` — вимкнути автозапуск
+
+### Працюємо з "Service Unit"
+
+Для вивчення команд і принципів управління будемо використовувати _NGINX_.
+
+```bash
 # Якщо потрібно актуалізуємо репозиторії
-sudo apt update && sudo apt upgrade - y
+sudo apt update && sudo apt upgrade -y
+
 # Встановимо `NGINX`
-sudo apt install nginx - y
+sudo apt install nginx -y
 ```
-```
-# Переглянути структуру
-systemctl cat nginx.service
-```
-```
+
+#### Загальна структура
+
+- `systemctl cat` — перегляд конфігурації
+
+Синтаксис: `systemctl cat UNIT|PATTERN`
+
+Розберемо всі опції конфігураційного файла:
+
+```bash
 # /lib/systemd/system/nginx.service
 # =======================
 # nginx signals reference doc:
 # http://nginx.org/en/docs/control.html
 #
+[Unit] # — Метадані служби та її взаємодія з іншими службами
+Description=A high performance web server and a reverse proxy server
+Documentation=man:nginx(8) # — сторінка man, де описано роботу зі службою
+After=network.target # — умови активації служби, у даному випадку після підняття мережевих інтерфейсів
+[Service] # — Конфігурація служби
+Type=forking # — Режим запуску
+# forking — після запуску демон відгалужується (fork), завершуючи батьківський процес
+# simple — під час запуску, демон переходить у режим очікування
+# one-shot — разовий запуск, наприклад скрипт одноразового виконання
+PIDFile=/run/nginx.pid # — файл з актуальним PID-ом служби
+ExecStartPre=/usr/sbin/nginx -t -q -g 'daemon on; master_process on;' # — команда передзапуску
+ExecStart=/usr/sbin/nginx -g 'daemon on; master_process on;' # — команда основного запуску
+ExecReload=/usr/sbin/nginx -g 'daemon on; master_process on;' -s reload # — команда перезапуску
+ExecStop=-/sbin/start-stop-daemon --quiet --stop --retry QUIT/5 --pidfile /run/nginx.pid # — команда перезапуск
+TimeoutStopSec=5 # — таймаут очікування зупинки перед примусовим завершенням
+KillMode=mixed # — Режим завершення
+# control-group — надсилає сигнали завершення всім процесам `cgroup` спільної з юнітом
+# process — надсилає сигнал завершення тільки головному процесу, пов'язаному з юнітом
+# mixed — спочатку як `control-group`, якщо не вдалося зупинити всі процеси, то як `process`
+[Install] # — Налаштування автозапуску юніта
+WantedBy=multi-user.target # — цільовий режим (target unit) активації активації юніта
 ```
 
 #### Редагування юнітів
 
-Для редагування юнітів необхідно використовувати команду systemctl edit, безпосередньо файли юнітів редагувати не рекомендується.
+Для редагування юнітів необхідно використовувати команду `systemctl edit`, безпосередньо файли юнітів редагувати не рекомендується.
+
+    Потрібні підвищені привілеї root
 
 Зміна системного редактора за замовчуванням
 
+```bash
+# Обираємо більш звичний редактор `vim.basic`
+sudo update-alternatives --config editor
 ```
-systemctl edit — редагування конфігурації
+
+- `systemctl edit` — редагування конфігурації
+
+Синтаксис: `systemctl edit UNIT|PATTERN`
+
+```bash
+# Відкриваємо `nginx` для редагування
+sudo systemctl edit --full nginx.service
 ```
-Синтаксис: systemctl edit UNIT|PATTERN
 
 Додамо опції автоматичного перезапуску:
 
-Повідомляємо systemd про зміну конфігурації.
+```bash
+[Service]
+...
+Restart=on-failure
+RestartSec=30s
+```
 
+Повідомляємо `systemd` про зміну конфігурації.
+
+- `systemctl daemon-reload` — перечитати конфігурацію менеджера
+
+```bash
+# Актуалізуємо менеджер конфігурацій
+sudo systemctl daemon-reload
 ```
-systemctl daemon-reload — перечитати конфігурацію менеджера
-```
+
 #### Тестування змін
 
 Моделюємо ситуацію збою:
 
-```
-[ Unit] # - - Метадані служби та її взаємодія з іншими службами
-Description = A high performance web server and a reverse proxy server
-Documentation = man:nginx ( 8 ) # - - сторінка man, де описано роботу зі службою
-After = network.target # - - умови активації служби, у даному випадку після підняття мережевих інтерфейсів
-```
-```
-[ Service] # - - Конфігурація служби
-Type = forking # - - Режим запуску
-# forking — після запуску демон відгалужується (fork), завершуючи батьківський процес
-# simple — під час запуску, демон переходить у режим очікування
-# one-shot — разове запуск, наприклад скрипт одноразового виконання
-PIDFile = /run/nginx.pid # - - файл з актуальним PID-ом служби
-ExecStartPre = /usr/sbin/nginx - t -q -g 'daemon on; master_process on;' # - - команда передзапуску
-ExecStart = /usr/sbin/nginx - g 'daemon on; master_process on;' # - - команда основного запуску
-ExecReload = /usr/sbin/nginx - g 'daemon on; master_process on;' -s reload # - - команда перезапуску
-ExecStop = - /sbin/start-stop-daemon - -quiet --stop --retry QUIT/ 5 - -pidfile /run/nginx.pid # - - команда перезапуск
-TimeoutStopSec = 5 # - - таймаут очікування зупинки перед примусовим завершенням
-KillMode = mixed # - - Режим завершення
-# control-group — надсилає сигнали завершення всім процесам `cgroup` спільної з юнітом
-# process — надсилає сигнал завершення тільки головному процесу, пов'язаному з юнітом
-# mixed — спочатку як `control-group`, якщо не вдалося зупинити всі процеси, то як `proce
-```
-```
-[ Install] # - - Налаштування автозапуску юніта
-WantedBy = multi-user.target # — цільовий режим (target unit) активації активації юніта
-```
-```
-Потрібні підвищені привілеї root
-```
-```
-# Обираємо більш звичний редактор `vim.basic`
-sudo update-alternatives - -config editor
-```
-```
-# Відкриваємо `nginx` для редагування
-sudo systemctl edit - -full nginx.service
-```
-```
-[ Service]
-...
-Restart = on-failure
-RestartSec = 30 s
-```
-```
-# Актуалізуємо менеджер конфігурацій
-sudo systemctl daemon-reload
-```
-```
+```bash
 # Жорстко вбиваємо процес сервісу
-sudo kill - 9 $(cat /run/nginx.pid)
-```
-```
+sudo kill -9 $(cat /run/nginx.pid)
+
 # Перевіримо статус
 systemctl status nginx.service
 # Чекаємо 60 секунд, і перевіряємо знову — він повинен бути знову запущений
@@ -558,155 +524,152 @@ systemctl status nginx.service
 
 #### Створюємо сервіс
 
+```bash
+# Створимо тестовий юніт test.service
+sudo vim /etc/systemd/system/test.service
+```
+
 Вставимо код:
 
+```bash
+[Unit]
+Description=Test-Service
+[Service]
+ExecStart=/bin/echo "Hello World!"
+```
+
 #### Перевіряємо сервіс
+
+```bash
+# Актуалізуємо менеджер конфігурацій
+sudo systemctl daemon-reload
+
+# Запустимо наш тестовий сервіс
+sudo systemctl start test.service
+
+# Дивимося на статус сервісу та логи
+systemctl status test.service
+
+# Якщо знадобиться редагування
+sudo systemctl edit --full test.service
+```
 
 ### Працюємо з "Timer Unit"
 
 Під час встановлення ОС можуть бути створені деякі таймери обслуговування системи, наприклад:
 
+- оновлення системних баз даних;
+
+- актуалізації програмних компонент;
+
+- очищення тимчасових директорій;
+
+- ротації лог-файлів та інше.
+
+    Таймер — це спеціальний тригер, що дає змогу запустити потрібні сервіси за розкладом або після настання будь-якої події. На відміну від `cron`, таймер не містить команд, а лише керує сервісом, який виконує необхідну дію.
+
+- `systemctl list-timers` — розклад активних таймерів
+
+Синтаксис: `systemctl list-timers PATTERN`
+
+```bash
+# Відобразити всі активні таймери
+systemctl list-timers
+
+# Фільтрувати за маскою імені
+systemctl list-timers apt*
+
+# Дивимося статус усіх або потрібного таймера
+systemctl status *.timer
 ```
-оновлення системних баз даних;
-актуалізації програмних компонент;
-очищення тимчасових директорій;
-ротації лог-файлів та інше.
-```
-```
-systemctl list-timers — розклад активних таймерів
-```
-Список единиц таймера, находящихся в памяти в данный момент, упорядоченный по следующему истечению времени Синтаксис:
-systemctl list-timers PATTERN
 
 #### Створюємо таймер
 
-Важливо: Ім'я таймера має збігатися з ім'ям служби, яку він буде активувати.
+_Важливо_: Ім'я таймера має збігатися з ім'ям служби, яку він буде активувати.
 
-```
-На практиці може знадобитися під час встановлення ПЗ, наприклад, трекінг системи YouTrack
-```
-```
-# Створимо тестовий юніт test.service
-sudo vim /etc/systemd/system/test.service
-```
-```
-[ Unit]
-Description = Test-Service
-```
-```
-[ Service]
-ExecStart = /bin/echo "Hello World!"
-```
-```
-# Актуалізуємо менеджер конфігурацій
-sudo systemctl daemon-reload
-# Запустимо наш тестовий сервіс
-sudo systemctl start test.service
-```
-```
-# Дивимося на статус сервісу та логи
-systemctl status test.service
-```
-```
-# Якщо знадобиться редагування
-sudo systemctl edit - -full test.service
-```
-```
-Таймер — це спеціальний тригер, що дає змогу запустити потрібні сервіси за розкладом або після настання будь-якої події. На відміну
-від cron, таймер не містить команд, а лише керує сервісом, який виконує необхідну дію.
-```
-```
-# Відобразити всі активні таймери
-systemctl list-timers
-```
-```
-# Фільтрувати за маскою імені
-systemctl list-timers apt *
-```
-```
-# Дивимося статус усіх або потрібного таймера
-systemctl status * .timer
-```
-```
+```bash
 # Перевіряємо раніше створений сервіс
 systemctl cat test.service
-```
-```
-# Создадим новый unit-файл
+
+# Створимо новий unit-файл
 sudo vim /etc/systemd/system/test.timer
 ```
 
 Використовуємо шаблон:
 
+```bash
+[Unit]
+Description=Running Test-Service every 15 seconds
+
+[Timer]
+AccuracySec=1us
+Persistent=true
+OnCalendar=*:*:0/15
+
+[Install]
+WantedBy=timers.target
+```
+
 Пояснення опцій:
 
+- `AccuracySec=1us` — вказуємо точність спрацьовування таймера, 1 мікросекунда
+
+- `Persistent=true` — якщо систему вимкнули в запланований час, завдання буде запущено під час наступного ввімкнення.
+
+- `OnCalendar=*:*:0/15` — коли виконувати, кожні 15 секунд
+
+```bash
+# Перевіряємо коректність значення `OnCalendar`
+systemd-analyze calendar *:*:0/15
+
+# > щопівтори хвилини
+systemd-analyze calendar *:0/1,2/1
+
+# > щохвилини
+systemd-analyze calendar *-*-* *:*:00
+
+# > щоденного о 2:00
+systemd-analyze calendar *-*-* 02:00:00
+
+# > щонеділі о 3:00
+systemd-analyze calendar Sun *-*-* 03:00:00
+
+# > кожен 10-й день місяця
+systemd-analyze calendar *-1/1-10 00:00:00
 ```
-AccuracySec= 1 us — вказуємо точність спрацьовування таймера, 1 мікросекунда
-Persistent=true — якщо систему вимкнули в запланований час, завдання буде запущено під час наступного ввімкнення.
-OnCalendar=*:*: 0 / 15 — коли виконувати, кожні 15 секунд
-```
+
 #### Перевіряємо таймер
 
-Для моніторингу логів зручно відкрити додаткову консоль або сеанс screen.
+Для моніторингу логів зручно відкрити додаткову консоль або сеанс `screen`.
+
+```bash
+# Контролюємо логи в окремому сеансі
+journalctl -f -u test.*
+```
 
 Повертаємося в основну консоль або сеанс.
 
-Додаткові команди
-
-```
-[ Unit]
-Description = Runung Test-Service every 15 seconds
-```
-```
-[ Timer]
-AccuracySec = 1 us
-Persistent = true
-OnCalendar =* : * : 0 / 15
-```
-```
-[ Install]
-WantedBy = timers.target
-```
-```
-# Перевіряємо коректність значення `OnCalendar`
-systemd-analyze calendar * : * : 0 / 15
-# > щопівтори хвилини
-systemd-analyze calendar * : 0 / 1 , 2 / 1
-# > щохвилини
-systemd-analyze calendar * - * - * * : * : 00
-# > щоденного о 2 : 00
-systemd-analyze calendar * - * - * 02 : 00 : 00
-# > щонеділі о 3 : 00
-systemd-analyze calendar Sun * - * - * 03 : 00 : 00
-# > кожен 10 - й день місяця
-systemd-analyze calendar * - 1 / 1 - 10 00 : 00 : 00
-```
-```
-# Контролюємо логи в окремому сеансі
-journalctl - f -u test. *
-```
-```
+```bash
 # Актуалізуємо менеджер конфігурацій
 sudo systemctl daemon-reload
-```
-```
+
 # Перевіряємо статуси сервісу і таймера
 systemctl status test.service; systemctl status test.timer
-```
-```
+
 # Активуємо і запускаємо таймер
 sudo systemctl enable test.timer; sudo systemctl start test.timer
-```
-```
+
 # Виконуємо перезавантаження VM, і перевіряємо ще раз
 sudo systemctl reboot
 ```
-```
+
+Додаткові команди
+
+```bash
 # Якщо знадобиться редагування
-sudo systemctl edit - -full test.timer
+sudo systemctl edit --full test.timer
 sudo systemctl daemon-reload; sudo systemctl restart test.timer
-```
-```
+
 # Зупиняємо і дезактивуємо таймер
 sudo systemctl stop test.timer; sudo systemctl disable test.timer
 ```
@@ -715,127 +678,121 @@ sudo systemctl stop test.timer; sudo systemctl disable test.timer
 
 ### Статистика завантаження
 
-#### Утиліта systemd-analyze
+#### Утиліта `systemd-analyze`
 
-Синтаксис: `systemd-analyze [OPTIONS] COMMAND Без опцій і підкоманд відображає статистику завантаження системи.
+Синтаксис: `systemd-analyze [OPTIONS] COMMAND`
 
+Без опцій і підкоманд відображає статистику завантаження системи.
+
+- `systemd-analyze blame` — статистика по кожному юніту
+
+- `systemd-analyze critical-chain` — дерево за часом завантаження
+
+- `systemd-analyze calendar` — перевірка значення OnCalendar для таймера
+
+```bash
+# Перевіряємо коли наступного разу буде запущено таймер
+systemd-analyze calendar weekly
+# Також можна `daily`, `hourly`, `monthly`
 ```
-systemd-analyze blame — статистика по кожному юніту
-systemd-analyze critical-chain — дерево за часом завантаження
-systemd-analyze calendar — перевірка значення OnCalendar для таймера
-```
+
 ### Активність сервісів
 
-```
-systemd-cgtop — інтерактивна статистика
-```
+- `systemd-cgtop` — інтерактивна статистика
+
 ### Перегляд журналів
 
 #### Утиліта journalctl
 
 Загальносистемні
 
+```bash
+# Логи всіх завантажень
+journalctl
+
+# Список останніх завантажень
+journalctl --list-boots
+
+# Перегляд логів завантаження за номером або хеш-ID
+journalctl -b -1
+journalctl -b c8db57fa17614054b4defdf5fcc084c2
+
+# Тільки логи ядра
+journalctl -k
+journalctl -k -b -2
+
+# Переглянути останні 10 записів
+journalctl -n 10
+
+# У реальному часі
+journalctl -f
+```
+
 Фільтрація за часом та датою
 
-Фільтрація через **grep**
+```bash
+journalctl --since "2023-03-21 19:25:00"
+journalctl --since yesterday
+journalctl --since 10:00 --until "1 hour ago" -u nginx.service
+```
+
+Фільтрація через `grep`
+
+```bash
+journalctl -b -u ssh.service --grep Accepted
+```
 
 Фільтрація за юнітами
 
-```
-# Перевіряємо коли наступного разу буде запущено таймер
-systemd-analyze calendar weekly
-# Також можна `daily`, `hourly`, `monthly`
-```
-```
-# Логи всіх завантажень
-journalctl
-```
-```
-# Список останніх завантажень
-journalctl - -list-boots
-```
-```
-# Перегляд логів завантаження за номером або хеш-ID
-journalctl - b - 1
-journalctl - b c 8 db 57 fa 17614054 b 4 defdf 5 fcc 084 c 2
-```
-```
-# Тільки логи ядра
-journalctl - k
-journalctl - k -b - 2
-```
-```
-# Переглянути останні 10 записів
-journalctl - n 10
-```
-```
-# У реальному часі
-journalctl - f
-```
-```
-journalctl - -since " 2023 - 03 - 21 19 : 25 : 00 "
-journalctl - -since yesterday
-journalctl - -since 10 : 00 - -until " 1 hour ago" -u nginx.service
-```
-```
-journalctl - b -u ssh.service - -grep Accepted
-```
-```
+```bash
 # Подивитися всі логи завантаження певної служби
-journalctl - u nginx.service
-```
-```
+journalctl -u nginx.service
+
 # Подивитися логи завантаження певної служби в поточному завантаженні
-journalctl - b -u nginx.service
+journalctl -b -u nginx.service
 ```
 
 Фільтрація за процесами, користувачами та групами
 
+```bash
+journalctl _PID=381
+journalctl -F _UID
+journalctl _UID=1000
+journalctl _UID=$(id -u itadmin)
+journalctl -F _GUID
+journalctl _GUID=1000
+```
+
 Фільтрація за рівнем помилок
+
+```bash
+# Відобразимо всі повідомлення WARNING за ідентифікатором "4"
+journalctl -p 4 -b
+# 0:emergency — непрацездатність системи
+# 1:alerts — попередження, що вимагають негайного втручання
+# 2:critical — критичний стан
+# 3:errors — помилки
+# 4:warning — попередження
+# 5:notice — повідомлення
+# 6:info — інформаційні повідомлення
+# 7:debug — налагоджувальні повідомлення
+```
 
 Додаткові можливості
 
-#### Утиліта lnav
-
-Logfile Navigator — інтерактивна утиліта навігації, фільтрації, пошуку та аналізу журналів подій. Зручна та інтуїтивно зрозуміла альтернатива
-cat та grep.
-
-# Додаткові матеріали
-
-## Англомовні онлайн статті
-
-```
-DigitalOcean: How To Use Systemctl to Manage Systemd Services and Units
-```
-```
-journalctl _PID = 381
-journalctl - F _UID
-journalctl _UID = 1000
-journalctl _UID = $(id -u itadmin)
-journalctl - F _GUID
-journalctl _GUID = 1000
-```
-```
-# Відобразимо всі повідомлення WARNING за ідентифікатором " 4 "
-journalctl - p 4 - b
-# 0 :emergency — непрацездатність системи
-# 1 :alerts — попередження, що вимагають негайного втручання
-# 2 :critical — критичний стан
-# 3 :errors — помилки
-# 4 :warning — попередження
-# 5 :notice — повідомлення
-# 6 :info — інформаційні повідомлення
-# 7 :debug — налагоджувальні повідомлення
-```
-```
+```bash
 # Виведення без обробника сторінок
-journalctl - -no-pager
-```
-```
+journalctl --no-pager
+
 # Наприклад зручно використовувати з `lnav`
-journalctl - b -u ssh.service - -no-pager | lnav
-```
-```
+journalctl -b -u ssh.service --no-pager | lnav
+
 # Детальніше
 man systemd.journal-fields
 ```
+
+#### Утиліта `lnav`
+
+_Logfile Navigator_ — інтерактивна утиліта навігації, фільтрації, пошуку та аналізу журналів подій. Зручна та інтуїтивно зрозуміла альтернатива `cat` та `grep`.
+
+![lnav](images/lnav.png)
