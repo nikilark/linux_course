@@ -1,0 +1,9 @@
+[Unit]
+Description=Running sys_check service every 15 seconds
+
+[Timer]
+AccuracySec=1us
+OnCalendar=*:0/10
+
+[Install]
+WantedBy=timers.target

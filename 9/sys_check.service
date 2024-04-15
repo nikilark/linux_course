@@ -1,0 +1,5 @@
+[Unit]
+Description=System checking service
+
+[Service]
+ExecStart=/usr/bin/bash /home/mykyta/sys_check.sh
