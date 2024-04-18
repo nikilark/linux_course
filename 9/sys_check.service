@@ -3,3 +3,8 @@ Description=System checking service
 
 [Service]
 ExecStart=/usr/bin/bash /home/mykyta/sys_check.sh
+Restart=on-success
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
