@@ -623,7 +623,7 @@
   7. User space start
 - Example from my `journalctl -k`:
 
-```
+```bash
 Jan 07 15:55:20 nixos kernel: Freeing unused decrypted memory: 2028K
 Jan 07 15:55:20 nixos kernel: Freeing unused kernel image (initmem) memory: 2956K
 Jan 07 15:55:20 nixos kernel: Write protecting the kernel read-only data: 24576k
@@ -1249,7 +1249,7 @@ Jan 07 15:55:20 nixos kernel:     TERM=Linux
 - **Yacc**: a **parser** that attempts to read tokens according to a **grammar**
   - `bison` - GNU version
 
-## Virtualization 
+## Virtualization
 
 ### Virtual Machines
 
