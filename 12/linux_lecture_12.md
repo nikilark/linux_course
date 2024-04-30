@@ -198,119 +198,109 @@ ml/nftrans/nftrans.html
 wrote 2183 bytes read 24 bytes 401.27 bytes/sec
 ```
 
-#### Making Exact Copies of a Directory Structure
+#### Створення точної копії структури каталогу
 
-By default, rsync copies files and directories without considering the previous contents of the destination directory. For example, if you transferred directory `d` containing the files `a` and `b` to a machine that already had a file named `d/c`, the destination would contain `d/a`, `d/b`, and `d/c` after the rsync.
+За замовчуванням `rsync` копіює файли та каталоги без урахування попереднього вмісту цільового каталогу. Наприклад, якщо ви передали каталог `d`, що містить файли `a` і `b`, на машину, яка вже мала файл з назвою `d/c`, місце призначення міститиме `d/a`, `d/b` і `d/c` після `rsync`.
 
-To make an exact replica of the source directory, you must delete files in the destination directory that do not exist in the source directory, such as `d/c` in this example. Use the `--delete` option to do that:
+Щоб створити точну копію вихідного каталогу, ви повинні видалити файли в цільовому каталозі, які не існують у вихідному каталозі, наприклад `d/c` у цьому прикладі. Для цього використовуйте опцію `--delete`:
 
 ```bash
 rsync -a --delete dir host:dest_dir
 ```
 
-> **WARNING**
-This operation can be dangerous, so take the time to inspect the destination directory to see if there’s anything that you’ll inadvertently delete. Remember, if you’re not certain about your transfer, use the `-nv` option to perform a dry run so that you’ll know exactly when rsync wants to delete a file.
+> **УВАГА**
+Ця операція може бути небезпечною. Пам’ятайте: якщо ви не впевнені щодо передачі, скористайтеся опцією `-nv`, щоб виконати сухий прогін, щоб точно знати, коли `rsync` хоче видалити файл.
 
-#### Using the Trailing Slash
+#### Використання слешу
 
-Be particularly careful when specifying a directory as the source in an rsync command line. Consider the basic command that we’ve been working with so far:
+Будьте особливо обережні, вказуючи каталог як джерело в командному рядку `rsync`. Розглянемо базову команду, з якою ми працювали досі:
 
 ```bash
 rsync -a dir host:dest_dir
 ```
 
-Upon completion, you’ll have the directory `dir` inside `dest_dir` on `host`. Figure 12-1 shows an example of how rsync normally handles a directory with files named `a` and `b`.
+Після завершення ви матимете каталог `dir` всередині `dest_dir` на `host`.
 
 ![rsync copy](images/rsync.png)
 
-However, adding a slash (`/`) to the source name significantly changes the behavior:
+Однак додавання слешу (`/`) до імені джерела суттєво змінює поведінку:
 
 ```bash
 rsync -a dir/ host:dest_dir
 ```
 
-Here, rsync copies everything inside `dir` to `dest_dir` on `host` without actually creating `dir` on the destination host. Therefore, you can think of a transfer of `dir/` as an operation similar to `cp dir/* dest_dir` on the local filesystem.
+Тут rsync копіює все всередині `dir` до `dest_dir` на `host` без фактичного створення `dir` на цільовому хості. Тому ви можете розглядати передачу `dir/` як операцію, подібну до `cp dir/* dest_dir` у локальній файловій системі.
 
-For example, say you have a directory `dir` containing the files `a` and `b` (`dir/a` and `dir/b`). You run the trailing-slash version of the command to transfer them to the `dest_dir` directory on `host`:
-
-```bash
-rsync -a dir/ host:dest_dir
-```
-
-When the transfer completes, `dest_dir` contains copies of `a` and `b` but not `dir`.
-
-If, however, you had omitted the trailing `/` on `dir`, `dest_dir` would have gotten a copy of `dir` with `a` and `b` inside. Then, as a result of the transfer, you’d have files and directories named `dest_dir/dir/a` and `dest_dir/dir/b` on the remote host. Figure 12-2 illustrates how rsync handles the directory structure from Figure 12-1 when using a trailing slash.
-
-When transferring files and directories to a remote host, accidentally adding a `/` after a path would normally be nothing more than a nuisance; you could go to the remote host, add the `dir` directory, and put all of the transferred items back in `dir`. Unfortunately, there’s a greater potential for disaster when you combine the trailing `/` with the `--delete` option; be extremely careful because you can easily remove unrelated files this way.
+Під час передачі файлів і каталогів на віддалений хост випадкове додавання `/` після шляху зазвичай буде не більш ніж незручністю; ви можете перейти на віддалений хост, додати каталог `dir` і помістити всі передані елементи назад у `dir`. На жаль, є більший потенціал для катастрофи, якщо ви поєднуєте кінцевий `/` з опцією `--delete`; оскільки таким чином ви можете легко видалити непов’язані файли.
 
 ![rsync copy with trailing slash](images/rsync_slash.png)
 
-#### Excluding Files and Directories
+#### Виключення файлів і каталогів
 
-One important feature of rsync is its ability to exclude files and directories from a transfer operation. For example, say you’d like to transfer a local directory called `src` to `host`, but you want to exclude anything named `.git`. You can do it like this:
+Важливою особливістю `rsync` є його здатність виключати файли та каталоги з операції передачі. Наприклад, скажімо, ви хочете перенести локальний каталог під назвою `src` до `host`, але ви хочете виключити все під назвою `.git`. Ви можете зробити це так:
 
 ```bash
 rsync -a --exclude=.git src host:
 ```
 
-Note that this command excludes all files and directories named `.git` because `--exclude` takes a pattern, not an absolute filename. To exclude one specific item, specify an absolute path that starts with `/`, as shown here:
+Зауважте, що ця команда виключає всі файли та каталоги з назвою `.git`, оскільки `--exclude` приймає шаблон, а не абсолютну назву файлу. Щоб виключити один конкретний елемент, укажіть абсолютний шлях, який починається з "/":
 
 ```bash
 rsync -a --exclude=/src/.git src host:
 ```
 
-> **NOTE** The first `/` in `/src/.git` in this command is not the root directory of your system but rather the base directory of the transfer.
+> Перший `/` у `/src/.git` у цій команді є не кореневим каталогом вашої системи, а скоріше основним каталогом передачі.
 
-Here are a few more tips on how to exclude patterns:
+- Ви можете мати скільки завгодно параметрів `--exclude`.
+- Якщо ви використовуєте ті самі шаблони неодноразово, розмістіть їх у відкритому текстовому файлі (один шаблон на рядок) і використовуйте `--exclude-from=file`.
+- Щоб виключити каталоги з назвою `item`, але включити файли з такою назвою, використовуйте скісну риску в кінці: `--exclude=item/`.
+- Шаблон виключення базується на компоненті повної назви файлу чи каталогу та може містити прості символи підстановки. Наприклад, `t*s` відповідає `this`, але не відповідає `ethers`.
+- Якщо ви виключили каталог або ім’я файлу, але виявили, що ваш шаблон надто суворий, використовуйте `--include`, щоб конкретно включити інший файл або каталог.
 
-- You can have as many `--exclude` parameters as you like.
-- If you use the same patterns repeatedly, place them in a plaintext file (one pattern per line) and use `--exclude-from=file`.
-- To exclude directories named `item` but include files with this name, use a trailing slash: `--exclude=item/`.
-- The exclude pattern is based on a full file or directory name component and may contain simple globs (wildcards). For example, `t*s` matches `this`, but it does not match `ethers`.
-- If you exclude a directory or filename but find that your pattern is too restrictive, use `--include` to specifically include another file or directory.
+#### Перевірка переказів, додавання захисних заходів і використання докладного режиму
 
-#### Checking Transfers, Adding Safeguards, and Using Verbose Mode
+Щоб пришвидшити роботу, `rsync` використовує швидку перевірку, щоб визначити, чи є якісь файли на джерелі передачі вже на місці призначення. Для перевірки використовується комбінація розміру файлу та дати його останньої зміни.
 
-To speed operation, rsync uses a quick check to determine whether any files on the transfer source are already on the destination. The check uses a combination of the file size and its last-modified date. The first time you transfer an entire directory hierarchy to a remote host, rsync sees that none of the files already exist at the destination, and it transfers everything. Testing your transfer with `rsync -n` verifies this for you.
+Після одного запуску rsync запустіть його знову за допомогою `rsync -v`. Цього разу ви побачите, що файли не відображаються у списку передачі, оскільки набір файлів існує на обох кінцях із однаковими датами змін.
 
-After running rsync once, run it again using `rsync -v`. This time you should see that no files show up in the transfer list because the file set exists on both ends, with the same modification dates.
+Якщо файли на стороні джерела не ідентичні файлам на стороні призначення, `rsync` передає вихідні файли та перезаписує всі файли, які існують на віддаленій стороні.
 
-When the files on the source side are not identical to the files on the destination side, rsync transfers the source files and overwrites any files that exist on the remote side. The default behavior may be inadequate, though, because you may need additional reassurance that files are indeed the same before skipping over them in transfers, or you might want to add some extra safeguards. Here are some options that come in handy:
+Однак ви можете додати деякі додаткові заходи безпеки. Ось кілька варіантів, які стануть у нагоді:
 
-- `--checksum` (abbreviation: `-c`) Computes checksums (mostly unique signatures) of the files to see if they’re the same. This option consumes a small amount of I/O and CPU resources during transfers, but if you’re dealing with sensitive data or files that often have uniform sizes, this is a must.
-- `--ignore-existing` Doesn’t clobber files already on the target side.
-- `--backup` (abbreviation: `-b`) Doesn’t clobber files already on the target but rather renames these existing files by adding a `~` suffix to their names before transferring the new files.
-- `--suffix=s` Changes the suffix used with `--backup` from `~` to `s`.
-- `--update` (abbreviation: `-u`) Doesn’t clobber any file on the target that has a later date than the corresponding file on the source.
+- `--checksum` (абревіатура: `-c`) Обчислює контрольні суми (здебільшого унікальні підписи) файлів, щоб перевірити, чи вони однакові.
+- `--ignore-existing` Не збиває файли, які вже знаходяться на цільовій стороні.
+- `--backup` (абревіатура: `-b`) Не знищує файли, які вже є в цільовому файлі, а перейменовує ці існуючі файли, додаючи до їхніх імен суфікс `~` перед передачею нових файлів.
+- `--suffix=s` Змінює суфікс, який використовується з `--backup` з `~` на `s`.
+- `--update` (абревіатура: `-u`) Не збиває будь-який файл у цільовому файлі, який має пізнішу дату, ніж відповідний файл у джерелі.
 
-With no special options, rsync operates quietly, producing output only when there’s a problem. However, you can use `rsync -v` for verbose mode or `rsync -vv` for even more details. (You can tack on as many `v` options as you like, but two is probably more than you need.) For a comprehensive summary after the transfer, use `rsync --stats`.
+#### Стиснення даних
 
-#### Compressing Data
-
-Many users like the `-z` option in conjunction with `-a` to compress the data before transmission:
+Багатьом користувачам подобається параметр `-z` у поєднанні з `-a`, щоб стиснути дані перед передачею:
 
 ```bash
 rsync -az dir host:dest_dir
 ```
 
-Compression can improve performance in certain situations, such as when you’re uploading a large amount of data across a slow connection (like a slow upstream link) or when the latency between the two hosts is high. However, across a fast local area network, the two endpoint machines can be constrained by the CPU time that it takes to compress and decompress data, so uncompressed transfer may be faster.
+Стиснення може покращити продуктивність у певних ситуаціях, наприклад, коли ви завантажуєте великий обсяг даних через повільне з’єднання (наприклад, повільне висхідне з’єднання) або коли затримка між двома хостами велика.
 
-#### Limiting Bandwidth
+Однак у швидкісній локальній мережі два кінцеві комп’ютери можуть бути обмежені процесорним часом, який потрібен для стиснення та розпакування даних, тому передача без стиснення може бути швидшою.
 
-It’s easy to clog the uplink of internet connections when you’re uploading a large amount of data to a remote host. Even though you won’t be using your (normally large) downlink capacity during such a transfer, your connection will still seem quite slow if you let rsync go as fast as it can because outgoing TCP packets such as HTTP requests will have to compete with your transfers for bandwidth on your uplink.
+#### Обмеження пропускної здатності
 
-To get around this, use `--bwlimit` to give your uplink a little breathing room. For example, to limit the bandwidth to 100,000Kbps, you might do something like this:
+Коли ви завантажуєте великий обсяг даних на віддалений хост, можна легко заблокувати висхідне з’єднання з Інтернетом.
+
+Щоб обійти це, використовуйте `--bwlimit`, щоб надати вашому висхідному каналу трохи передишки. Наприклад, щоб обмежити пропускну здатність до 100 000 Кбіт/с, ви можете зробити щось на зразок цього:
 
 ```bash
 rsync --bwlimit=100000 -a dir host:dest_dir
 ```
 
-#### Transferring Files to Your Computer
+#### Перенесення файлів на комп'ютер
 
-The rsync command isn’t just for copying files from your local machine to a remote host. You can also transfer files from a remote machine to your local host by placing the remote host and remote source path as the first argument on the command line. For example, to transfer `src_dir` on the remote system to `dest_dir` on the local host, run this command:
+Команда `rsync` призначена не лише для копіювання файлів із локальної машини на віддалений хост, але і в інший бік. Наприклад, щоб перенести `src_dir` на віддаленій системі в `dest_dir` на локальному хості, виконайте цю команду:
 
 ```bash
 rsync -a host:src_dir dest_dir
 ```
 
-> **NOTE** As mentioned before, you can use rsync to duplicate directories on your local machine; just omit `host:` on both arguments.
+> Ви також можете використовувати `rsync` для дублювання каталогів на вашій локальній машині; просто пропустіть `host:` в обох аргументах.
