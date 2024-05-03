@@ -1,46 +1,48 @@
 # Розділ 13: Віртуалізація
 
-Слово "віртуальний" може бути неоднозначним у комп'ютерних системах. Воно використовується головним чином для позначення посередника, який перетворює складний або фрагментований нижній рівень на спрощений інтерфейс, який може бути використаний декількома користувачами.
+The word _virtual_ can be vague in computing systems. It’s used primarily to indicate an intermediary that translates a complex or fragmented underlying layer to a simplified interface that can be used by multiple consumers.
 
-Розгляньте приклад, який ми вже бачили, віртуальна пам'ять, яка дозволяє декільком процесам отримати доступ до великого банку пам'яті так, ніби кожен мав свій власний ізольований банк пам'яті.
+Consider an example that we’ve already seen, virtual memory, which allows multiple processes to access a large bank of memory as if each had its own insulated bank of memory.
 
-![Віртуальна пам'ять](images/virtual_memory.png)
+![Virtual Memory](images/virtual_memory.png)
 
-Це визначення все ще трохи складне, тому може бути краще пояснити типову мету віртуалізації: створення ізольованих середовищ, щоб ви могли запустити декілька систем без конфліктів.
+That definition is still a bit daunting, so it might be better to explain the typical purpose of virtualization: creating isolated environments so that you can get multiple systems to run without clashing.
 
-## Віртуальні машини
+Because virtual machines are relatively easy to understand at a higher level, that’s where we’ll start our tour of virtualization.
 
-Віртуальні машини базуються на тому ж концепті, що й віртуальна пам'ять, за винятком того, що _все_ обладнання машини є віртуальним, а не лише пам'ять. За цією моделлю ви створюєте цілком нову машину (процесор, пам'ять, інтерфейси вводу-виводу та інше) за допомогою програмного забезпечення і запускаєте цілковито нову операційну систему в ній — включаючи ядро. Цей тип віртуальної машини більш конкретно називається _системною віртуальною машиною_, і він існує вже десятиліттями.
+## Virtual Machines
 
-Наприклад, IBM-мейнфрейми традиційно використовують системні віртуальні машини для створення багатокористувацького середовища; в свою чергу, користувачі отримують свою власну віртуальну машину, на якій запущена CMS, проста однокористувацька операційна система.
+Virtual machines are based on the same concept as virtual memory, except with _all_ of the machine’s hardware instead of just memory. In this model, you create an entirely new machine (processor, memory, I/O interfaces, and so on) with the help of software, and run a whole operating system in it—including a kernel. This type of virtual machine is more specifically called a _system virtual machine_, and it’s been around for decades.
 
-Ви можете побудувати віртуальну машину цілком на програмному забезпеченні (зазвичай це називається _емулятором_) або використовувати підлегле обладнання наскільки це можливо, як це робиться в віртуальній пам'яті.
+For example, IBM mainframes traditionally use system virtual machines to create a multiuser environment; in turn, users get their own virtual machine running CMS, a simple single-user operating system.
 
-![Віртуальна машина](images/vm.png)
+You can construct a virtual machine entirely in software (usually called an _emulator_) or by utilizing the underlying hardware as much as possible, as is done in virtual memory.
 
-### Гіпервізори
+![Virtual Machine](images/vm.png)
 
-Керування однією або декількома віртуальними машинами на комп'ютері здійснюється за допомогою програмного забезпечення, яке називається _гіпервізором_ або _віртуальним монітором машин (VMM)_, яке працює подібно до того, як операційна система керує процесами. Існують два типи гіпервізорів, і спосіб використання віртуальної машини залежить від типу.
+### Hypervisors
 
-Для більшості користувачів _гіпервізор другого типу_ є найбільш знайомим, оскільки він працює на звичайній операційній системі, такій як Linux. Наприклад, VirtualBox є гіпервізором другого типу, і ви можете запустити його на своїй системі без значних змін.
+Overseeing one or more virtual machines on a computer is a piece of software called a _hypervisor_ or _virtual machine monitor (VMM)_, which works similarly to how an operating system manages processes. There are two types of hypervisors, and the way you use a virtual machine depends on the type.
 
-З іншого боку, _гіпервізор першого типу_ більше схожий на власне операційну систему (особливо ядро), побудовану спеціально для швидкого та ефективного запуску віртуальних машин. Цей тип гіпервізора іноді може використовувати звичайну допоміжну систему, таку як Linux, для допомоги в управлінні завданнями.
+To most users, the _type 2 hypervisor_ is the most familiar, because it runs on a normal operating system such as Linux. For example, VirtualBox is a type 2 hypervisor, and you can run it on your system without extensive modifications.
 
-Навіть якщо ви ніколи не запускали його на власному обладнанні, ви взаємодієте з гіпервізорами першого типу весь час. Усі хмарні обчислення працюють як віртуальні машини під управлінням гіпервізорів першого типу, таких як Xen. Коли ви отримуєте доступ до веб-сайту, ви майже навряд чи працюєте з програмним забезпеченням, що працює на такій віртуальній машині.
+On the other hand, a _type 1 hypervisor_ is more like its own operating system (especially the kernel), built specifically to run virtual machines quickly and efficiently. This kind of hypervisor might occasionally employ a conventional companion system such as Linux to help with management tasks.
 
-_Створення екземпляру операційної системи на хмарному сервісі, такому як AWS, означає створення віртуальної машини на гіпервізорі першого типу._
+Even though you might never run one on your own hardware, you interact with type 1 hypervisors all the time. All cloud computing services run as virtual machines under type 1 hypervisors such as Xen. When you access a website, you’re almost certainly hitting software running on such a virtual machine.
 
-Взагалі, віртуальну машину з її операційною системою називають _гостем_. _Хост_ — це те, що запускає гіпервізор. Для гіпервізорів другого типу хостом є просто ваша операційна система. Для гіпервізорів першого типу хостом є сам гіпервізор, можливо, в поєднанні зі спеціалізованою допоміжною системою.
+_Creating an instance of an operating system on a cloud service such as AWS is creating a virtual machine on a type 1 hypervisor._
 
-### Обладнання у віртуальній машині
+In general, a virtual machine with its operating system is called a _guest_. The _host_ is whatever runs the hypervisor. For type 2 hypervisors, the host is just your native system. For type 1 hypervisors, the host is the hypervisor itself, possibly combined with a specialized companion system.
 
-У теорії гіпервізору повинно бути просто надати обладнані інтерфейси для гостьової системи.
+### Hardware in a Virtual Machine
 
-Наприклад, щоб надати віртуальний пристрій диска, ви можете створити великий файл десь на хості та надати доступ як до диска зі стандартною емуляцією введення-виведення. Цей підхід реалізує віртуальне обладнання; однак він неефективний.
+In theory, it should be straightforward for the hypervisor to provide hardware interfaces for a guest system.
 
-Більшість відмінностей, які ви можете спостерігати між реальним та віртуальним обладнанням, є результатом прокидування (_bridging_), що дозволяє гостям отримувати більш прямий доступ до ресурсів хоста. Обхід віртуального обладнання між хостом та гостем відомий як _пара-віртуалізація_.
+For example, to provide a virtual disk device, you could create a big file somewhere on the host and provide access as a disk with standard device I/O emulation. This approach is a strict hardware virtual machine; however, it is inefficient.
 
-Мережеві інтерфейси та блочні пристрої найбільш схильні до такого підходу; наприклад, пристрій _/dev/xvd_ на хмарній системі є віртуальним диском Xen, який використовує драйвер ядра Linux для прямого спілкування з гіпервізором.
+Most of the differences you might encounter between real and virtual hardware are a result of a bridging that allows guests to access host resources more directly. Bypassing virtual hardware between the host and guest is known as _paravirtualization_.
+
+Network interfaces and block devices are among the most likely to receive this treatment; for example, a _/dev/xvd_ device on a cloud computing instance is a Xen virtual disk, using a Linux kernel driver to talk directly to the hypervisor.
 
 #### Virtual Machine CPU Modes
 
