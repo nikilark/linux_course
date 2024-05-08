@@ -1,0 +1,2718 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>How Linux Works</title>
+  </head>
+  <body>
+    <h1 id="how-linux-works">How Linux Works</h1>
+    <h2 id="overview">Overview</h2>
+    <h3 id="kernel">Kernel</h3>
+    <ul>
+      <li>
+        kernel
+        <ul>
+          <li>
+            is <em>in memory</em>, telling CPU where to look for its next task
+          </li>
+          <li>runs in <strong>kernel mode</strong></li>
+        </ul>
+      </li>
+      <li>
+        <strong>kernel space</strong> - the memory area only accessible by
+        kernel
+      </li>
+      <li>
+        <strong>user space</strong> - part of the main memory accessible by user
+        processes
+      </li>
+      <li>
+        kernel can run <strong>kernel threads</strong>
+        <ul>
+          <li>like processes but have access to kernel space</li>
+          <li><code>kthreadd</code></li>
+          <li><code>kblockd</code></li>
+        </ul>
+      </li>
+      <li>
+        Kernel manages:
+        <ul>
+          <li>
+            processes
+            <ul>
+              <li>which processes are allowed to use the CPU?</li>
+            </ul>
+          </li>
+          <li>memory</li>
+          <li>device drivers</li>
+          <li>
+            system calls and support
+            <ul>
+              <li>
+                processes <em>normally</em> use system calls to communicate with
+                kernel
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="process-management">Process Management</h4>
+    <ul>
+      <li>
+        processes run <em>simultaneously</em>
+        <ul>
+          <li>however they do not run at <em>exactly</em> the same time</li>
+          <li>each process uses the CPU for a <strong>time slice</strong></li>
+          <li>
+            <strong>context switch</strong> - kernel&#39;s responsibility
+            <ul>
+              <li><em>when</em> does the kernel run?</li>
+              <li>
+                kernel runs <em>between</em> process time slices during a
+                <strong>context switch</strong>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="memory-management">Memory Management</h4>
+    <ul>
+      <li>kernel manages memory during <strong>context switch</strong></li>
+      <li>
+        modern CPUs include a <strong>Memory Management Unit (MMU)</strong>
+        <ul>
+          <li>enabling <strong>virtual memory</strong></li>
+          <li><strong>page table</strong></li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="system-calls-and-support">System Calls and Support</h4>
+    <ul>
+      <li>
+        <code>fork()</code>
+        <ul>
+          <li>
+            kernel creates a <em>nearly identical</em> copy of the process
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>exec(program)</code>
+        <ul>
+          <li>
+            kernel loads &amp; starts <code>program</code>, replacing the
+            current process
+          </li>
+        </ul>
+      </li>
+      <li>
+        other than init, <em>all</em> new user processes start as a result of
+        <code>fork()</code>
+        <ul>
+          <li>
+            <em>then</em>, probably runs <code>exec()</code> to start a new
+            program
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>pseudodevices</strong>
+        <ul>
+          <li>look-alike devices to user processes</li>
+          <li>but implemented purely in software</li>
+          <li>
+            e.g. <code>/dev/random</code> - the kernel random number generator
+            device
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="user-space">User Space</h3>
+    <ul>
+      <li>memory for the entire collection of running processes</li>
+      <li><strong>userland</strong></li>
+    </ul>
+    <h3 id="users">Users</h3>
+    <ul>
+      <li>every user-space process has a user <strong>owner</strong></li>
+    </ul>
+    <h2 id="basic-commands-and-directory-hierarchy">
+      Basic Commands and Directory Hierarchy
+    </h2>
+    <h3 id="commands">Commands</h3>
+    <ul>
+      <li><code>/bin/sh</code> - the Bourne Shell</li>
+      <li><code>bash</code> - the <strong>Bourne Again Shell</strong></li>
+      <li>
+        <code>Ctrl-D</code> vs. <code>Ctrl-C</code>
+        <ul>
+          <li>
+            <code>Ctrl-D</code> stops the current standard input entry from
+            terminal with an <code>EOF</code> message
+          </li>
+          <li>
+            <code>Ctrl-C</code> terminates program regardless of its
+            input/output
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>rmdir</code> - removes a <code>dir</code>
+        <ul>
+          <li>fails when <code>dir</code> is <em>NOT</em> empty</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Globbing</strong>
+        <ul>
+          <li>to match <em>all</em> files: <code>*</code></li>
+          <li><code>?</code> - match exactly one character</li>
+          <li>
+            <code>&#39;*&#39;</code> - if you do not want the shell to expand a
+            glob
+          </li>
+          <li>
+            Shell performs expansions <em>before</em> running commands, and only
+            then
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>grep</code>
+        <ul>
+          <li>
+            <code>grep root /etc/passwd</code> - print lines in
+            <code>/etc/passwd</code> that contain <code>root</code>
+          </li>
+          <li>
+            handy when operating on multiple files - it prints filename in
+            addition to the matching line
+          </li>
+          <li>
+            Options:
+            <ul>
+              <li><code>-i</code> - case insensitive</li>
+              <li><code>-v</code> - inverse search</li>
+              <li>
+                <code>-e</code> &amp; <code>-E</code> pattern
+                <ul>
+                  <li>
+                    <code>.*</code> - any number of characters, including none
+                  </li>
+                  <li><code>.+</code> - 1 or more</li>
+                  <li><code>.</code> - exactly one</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>less</code>
+        <ul>
+          <li>one screenful at a time</li>
+          <li>
+            search for text inside <code>less</code>
+            <ul>
+              <li><code>/word</code> - search forward</li>
+              <li><code>?word</code> - search backward</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>pwd</code>
+        <ul>
+          <li><code>-P</code> - avoid all symlinks</li>
+        </ul>
+      </li>
+      <li>
+        <code>diff</code> - difference between two text files
+        <ul>
+          <li><code>diff -u</code></li>
+        </ul>
+      </li>
+      <li><code>file</code> - format of a file</li>
+      <li>
+        <code>find</code>
+        <ul>
+          <li>
+            <code>$ find dir -name file -print</code>
+            <ul>
+              <li>find <code>file</code> in <code>dir</code></li>
+              <li>
+                <code>-name</code> - pattern, which should <em>NOT</em> include
+                a slash <code>/</code>
+              </li>
+              <li>
+                <code>-print</code> - print full file name on stdin, followed by
+                newline
+              </li>
+              <li>
+                <code>-print0</code> - print followed by null (instead of
+                newline)
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>locate</code> - similar to <code>find</code> but searches against
+        a pre-built index
+        <ul>
+          <li><em>not</em> real time</li>
+        </ul>
+      </li>
+      <li><code>tail</code> &amp; <code>head</code></li>
+      <li>
+        <code>sort</code> - put lines of a text file in alphanumeric order
+      </li>
+      <li><code>chsh</code> - change your shell</li>
+    </ul>
+    <h3 id="environment-and-shell-variables">
+      Environment and Shell Variables
+    </h3>
+    <ul>
+      <li>
+        <em>ALL</em> processes on Unix systems have environment variable storage
+      </li>
+      <li>
+        OS passes <em>all</em> shell&#39;s env variables to programs run by
+        shell
+      </li>
+    </ul>
+    <h3 id="command-path">Command Path</h3>
+    <ul>
+      <li>separated by <code>:</code></li>
+    </ul>
+    <h3 id="manual">Manual</h3>
+    <ul>
+      <li>Manual page followed by <strong>section number</strong></li>
+      <li><code>man &lt;section_number&gt; passwd</code></li>
+      <li><code>info &lt;command&gt;</code></li>
+    </ul>
+    <h3 id="shell-i-o">Shell I/O</h3>
+    <ul>
+      <li>pipe <code>|</code></li>
+      <li>stderr to stdout - <code>2&gt;&amp;1</code></li>
+    </ul>
+    <h3 id="processes">Processes</h3>
+    <ul>
+      <li>
+        <code>ps</code>
+        <ul>
+          <li>
+            <code>TTY</code> - the terminal device where the process is running
+          </li>
+          <li><code>ps x</code> - show all <em>your</em> running processes</li>
+          <li>
+            <code>ps ax</code> - show <em>ALL</em> processes
+            <em>on the system</em>
+          </li>
+        </ul>
+      </li>
+      <li><code>$$</code> - current shell&#39;s PID</li>
+    </ul>
+    <h4 id="process-termination">Process Termination</h4>
+    <ul>
+      <li><code>kill</code> - sends <code>TERM</code></li>
+      <li>
+        <code>kill -STOP &lt;PID&gt;</code> - freeze (instead of terminating)
+        <ul>
+          <li>process still in memory</li>
+        </ul>
+      </li>
+      <li>
+        <code>kill -CONT &lt;PID&gt;</code> - run the stopped process
+        <em>again</em>
+      </li>
+      <li><code>Ctrl-C</code> sends an <code>INT</code> signal</li>
+      <li>
+        <code>kill -KILL</code>
+        <ul>
+          <li>send the <code>KILL</code> signal</li>
+          <li><code>kill -9</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="job-control">Job Control</h4>
+    <ul>
+      <li><code>TSTP</code> &amp; <code>CONT</code> signals</li>
+      <li>
+        If a program tries to read from stdin while it&#39;s in the background,
+        it can freeze/terminate
+        <ul>
+          <li>try to <code>fg</code> to bring it back</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="file-modes-and-permissions">File Modes and Permissions</h3>
+    <h4 id="permissions">Permissions</h4>
+    <ul>
+      <li>
+        <code>s</code> permission (instead of <code>x</code>): the executable is
+        <strong>setuid</strong>
+        <ul>
+          <li>
+            when the program is executed, it runs as though the file owner is
+            the user instead of you
+          </li>
+          <li>
+            run as root in order to get the privileges needed to change system
+            files
+          </li>
+          <li>
+            e.g. <code>paswd</code> - needs to change <code>/etc/passwd</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        To change,
+        <ul>
+          <li><code>chmod &lt;group/user&gt;+&lt;permission&gt; file</code></li>
+          <li><code>chmod &lt;group/user&gt;-&lt;permission&gt; file</code></li>
+        </ul>
+      </li>
+      <li>
+        You can <em>only</em> access a file in a directory <em>if</em> the
+        directory is executable
+      </li>
+      <li>
+        <code>umask</code> - applies a predefined set of permissions to any new
+        file created by you
+        <ul>
+          <li>
+            <code>&lt;mask&gt;</code> - permission bits that should
+            <em>NOT</em> be set on a newly created file
+          </li>
+          <li><strong>logical complement</strong>!!!</li>
+          <li>sets to <code>&lt;mask&gt; &amp; 0777</code></li>
+          <li>
+            Use <code>umask 022</code> if you want everyone to be able to see
+            all files &amp; directories
+          </li>
+          <li>
+            Use <code>umask 077</code> if you do <em>NOT</em> want anyone to be
+            able to see all files &amp; directories
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="symbolic-links">Symbolic Links</h4>
+    <ul>
+      <li>
+        <code>&lt;file_pointed_to&gt;</code> does <em>NOT</em> have to mean
+        anything
+        <ul>
+          <li>does <em>NOT</em> need to exist</li>
+        </ul>
+      </li>
+      <li>
+        from <code>target</code> to <code>linkname</code>
+        <ul>
+          <li><code>ln -s target linkname</code></li>
+          <li>
+            <code>target</code> - file/directory <code>linkname</code> points to
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="archiving-and-compressing-files">
+      Archiving and Compressing Files
+    </h3>
+    <ul>
+      <li><code>gzip</code> and <code>tar</code></li>
+    </ul>
+    <h4 id="-gzip-"><code>gzip</code></h4>
+    <ul>
+      <li>
+        <em>ONLY</em> compress, does <em>NOT</em> archive
+        <ul>
+          <li>
+            i.e. does <em>NOT</em> pack multiple files/directories into a single
+            one
+          </li>
+        </ul>
+      </li>
+      <li>to compress, <code>gzip &lt;file&gt;</code></li>
+      <li>to unzip, <code>gunzip &lt;file.gz&gt;</code></li>
+    </ul>
+    <h4 id="-tar-"><code>tar</code></h4>
+    <ul>
+      <li>
+        to create an archive -
+        <code>tar cvf &lt;archive&gt;.tar file1 file2 ...</code>
+      </li>
+      <li>
+        Flags
+        <ul>
+          <li><code>c</code> - create mode</li>
+          <li><code>v</code> - verbose</li>
+          <li>
+            <code>f</code> - file option
+            <ul>
+              <li>followed by the file name to create</li>
+              <li>to use stdin/stdout, set filename to <code>-</code></li>
+            </ul>
+          </li>
+          <li><code>x</code> - extract mode</li>
+        </ul>
+      </li>
+      <li>
+        To unpack <code>.tar</code> file,
+        <code>tar xvf &lt;archive&gt;.tar</code>
+        <ul>
+          <li>
+            does <em>NOT</em> remove the archived <code>.tar</code> file after
+            extraction
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>Table-of-Contents Mode</strong>
+        <ul>
+          <li>using flag <code>t</code> instead of <code>x</code></li>
+          <li>
+            check the contents of a <code>.tar</code> file
+            <em>before</em> unpacking
+          </li>
+        </ul>
+      </li>
+      <li>
+        Consider using <code>-p</code> when <em>unpacking</em>
+        <ul>
+          <li>preserves permissions</li>
+          <li>default under superuser</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="-tar-gz-compressed-archives">
+      <code>.tar.gz</code> - Compressed Archives
+    </h4>
+    <ul>
+      <li><code>gunzip</code> first</li>
+      <li>then <code>tar xvf</code></li>
+    </ul>
+    <h4 id="-zcat-"><code>zcat</code></h4>
+    <ul>
+      <li>Combine archival and compression functions with a pipeline</li>
+      <li><code>zcat file.tar.gz | tar xvf -</code></li>
+      <li>
+        <code>zcat</code> - <code>gunzip -dc</code>
+        <ul>
+          <li><code>-d</code> - decompress</li>
+          <li><code>-c</code> - send result to standard output</li>
+        </ul>
+      </li>
+      <li>
+        <code>tar</code> has a shortcut for <code>zcat</code>
+        <ul>
+          <li><code>tar ztvf file.tar.gz</code></li>
+        </ul>
+      </li>
+      <li><code>.tgz</code> file === <code>.tar.gz</code> file</li>
+    </ul>
+    <h3 id="linux-directory-hierarchy">Linux Directory Hierarchy</h3>
+    <ul>
+      <li>
+        <code>/usr</code> - where most of the user space programs and data
+        reside
+        <ul>
+          <li><code>/usr/local</code></li>
+          <li><code>/usr/share</code></li>
+        </ul>
+      </li>
+      <li>
+        Kernel location
+        <ul>
+          <li><code>/vmlinuz</code> or <code>/boot/vmlinuz</code></li>
+          <li>
+            boot loader loads this file into memory and sets it in motion when
+            system boots
+          </li>
+        </ul>
+      </li>
+      <li>
+        Once boo loader starts the kernel, the main kernel file is no longer
+        used by the running system
+        <ul>
+          <li>
+            however, <code>loadable kernel modules</code> - modules
+            loaded/unloaded by kernel
+          </li>
+          <li><code>/lib/modules</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="superuser">Superuser</h3>
+    <ul>
+      <li><code>/etc/sudoers</code></li>
+      <li>Use <code>visudo</code> to edit <code>/etc/sudoers</code></li>
+      <li>checks for syntax errors <em>after</em> saving the file</li>
+      <li>
+        To check <code>sudo</code> logs,
+        <code>journalctl SYSLOG_IDENTIFIER=sudo</code>
+      </li>
+    </ul>
+    <h2 id="devices">Devices</h2>
+    <h3 id="device-files">Device Files</h3>
+    <ul>
+      <li>
+        <strong>device files</strong> a.k.a. <strong>device nodes</strong>
+        <ul>
+          <li>under <code>/dev</code></li>
+        </ul>
+      </li>
+      <li><code>echo blah &gt; /dev/null</code></li>
+      <li>
+        File modes for devices:
+        <ul>
+          <li><code>b</code> - block</li>
+          <li><code>c</code> - character</li>
+          <li><code>p</code> - pipe</li>
+          <li><code>s</code> - socket</li>
+        </ul>
+      </li>
+      <li>Major vs. minor device numbers</li>
+      <li>
+        <em>NOT all</em> devices have device files
+        <ul>
+          <li>e.g. network interfaces</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="block-device">Block Device</h4>
+    <ul>
+      <li>data accessed in fixed chunks</li>
+      <li>quick random access</li>
+      <li>fixed size</li>
+      <li>disks</li>
+    </ul>
+    <h4 id="character-device">Character Device</h4>
+    <ul>
+      <li>data streams</li>
+      <li>no fixed size</li>
+      <li>printer</li>
+    </ul>
+    <h4 id="pipe-device">Pipe Device</h4>
+    <ul>
+      <li>
+        like character devices, but
+        <ul>
+          <li>
+            with <em>another process</em> at the other end of the I/O stream
+            instead of kernel driver
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="socket-device">Socket Device</h4>
+    <ul>
+      <li>special-purpose interfaces for interprocess communication</li>
+      <li>outside of <code>/dev</code></li>
+    </ul>
+    <h3 id="sysfs">sysfs</h3>
+    <ul>
+      <li>
+        kernel assigns devices in the order in which devices are found
+        <ul>
+          <li>a device may have different names between reboots!</li>
+        </ul>
+      </li>
+      <li>
+        the <strong>sysfs</strong> interface - provided by kernel
+        <ul>
+          <li>
+            to provide uniform view for attached devices based on their
+            <em>actual</em> hardware attributes
+          </li>
+          <li>path under <code>/sys/devices/</code></li>
+        </ul>
+      </li>
+      <li><code>/dev/</code> enables user processes to use the device</li>
+      <li>
+        <code>/sys/devices/</code> is used to view information and manage the
+        device
+      </li>
+      <li>
+        Use <code>udevadm</code> to show the sys path of a device under
+        <code>/dev/</code>
+        <ul>
+          <li><code>udevadm info --query=all --name=/dev/sda</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="-dd-"><code>dd</code></h3>
+    <ul>
+      <li>
+        <code>dd</code>
+        <ul>
+          <li>read from an input file/stream</li>
+          <li>write to an output file/stream</li>
+        </ul>
+      </li>
+      <li><code>dd</code> copies data in blocks of fixed size</li>
+      <li>uses an old IBM Job Control Language (JCL) syntax</li>
+    </ul>
+    <h3 id="device-name-summary">Device Name Summary</h3>
+    <ul>
+      <li>
+        To find the name of a device (when partitioning a disk)
+        <ul>
+          <li>
+            query udevd using <code>udevadm</code> - the <em>ONLY</em> reliable
+            way
+          </li>
+          <li>look for the device under <code>/sys/</code></li>
+          <li>
+            guess from the output of <code>journalctl -k</code>
+            <ul>
+              <li>prints kernel messages</li>
+            </ul>
+          </li>
+          <li>guess from the output of kernel system log</li>
+          <li>
+            if disk device already visible to system, check output of
+            <code>mount</code>
+          </li>
+          <li>
+            run <code>cat /proc/devices</code> to see block/character devices
+            for which the system has drivers
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="hard-disks-dev-sd-">Hard Disks <code>/dev/sd*</code></h4>
+    <ul>
+      <li>
+        <code>/dev/sda</code>, <code>/dev/sdb</code> etc - <em>entire</em> disks
+      </li>
+      <li>
+        <code>/dev/sda1</code>, <code>/dev/sda2</code>, etc -
+        <strong>partitions</strong>
+      </li>
+      <li>
+        <code>sd</code> - SCSI disk
+        <ul>
+          <li><strong>Small Computer System Interface (SCSI)</strong></li>
+        </ul>
+      </li>
+      <li><code>lsscsi</code> - list SCSI devices</li>
+      <li>
+        Linux uses <strong>Universally Unique Identifier (UUID)</strong> and
+        <strong>Logical Volume Manager (LVM)</strong> to maintain stable disk
+        device mapping
+      </li>
+    </ul>
+    <h4 id="virtual-disks-dev-xvd-dev-vd-">
+      Virtual Disks <code>/dev/xvd*</code> &amp; <code>/dev/vd*</code>
+    </h4>
+    <ul>
+      <li>for virtual machines</li>
+    </ul>
+    <h4 id="non-volatile-memory-devices-dev-nvme-">
+      Non-Volatile Memory Devices: <code>/dev/nvme*</code>
+    </h4>
+    <ul>
+      <li>talking to solid state storage</li>
+      <li><code>nvme list</code></li>
+    </ul>
+    <h4 id="device-mapper-dev-dm-dev-mapper-">
+      Device Mapper <code>/dev/dm-*</code> &amp; <code>/dev/mapper/</code>
+    </h4>
+    <ul>
+      <li>
+        <strong>LVM</strong>: a level up from disks and other direct block
+        storage on some systems
+      </li>
+    </ul>
+    <h4 id="cd-dvd-drives-dev-sr-">CD/DVD drives <code>/dev/sr*</code></h4>
+    <ul>
+      <li>optical storage drives <em>might</em> show up as PATA devices</li>
+      <li><code>/dev/sr*</code> devices are <em>read only</em></li>
+      <li>
+        To write/rewrite optical devices, use &quot;generic&quot; SCSI devices
+        such as <code>/dev/sg0</code>
+      </li>
+    </ul>
+    <h4 id="pata-hard-disks-dev-hd-">PATA Hard Disks <code>/dev/hd*</code></h4>
+    <ul>
+      <li><strong>PATA (Parallel ATA)</strong></li>
+      <li>
+        <code>/dev/hda</code>, <code>/dev/hdb</code>, <code>/dev/hdc</code>,
+        <code>/dev/hdd</code>
+      </li>
+      <li>
+        If a SATA device recognized as PATA - it&#39;s running in compatibility
+        mode
+        <ul>
+          <li>hindered performance</li>
+          <li>check your BIOS</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="terminals-dev-tty-dev-pts-dev-tty-">
+      Terminals: <code>/dev/tty*</code>, <code>/dev/pts/</code>,
+      <code>/dev/tty</code>
+    </h4>
+    <ul>
+      <li>
+        <strong>Terminal</strong> - device for moving characters between a user
+        process and an I/O device
+      </li>
+      <li>
+        <em>Most</em> terminals are <strong>pseudoterminal</strong> devices
+      </li>
+      <li>
+        Two common terminals:
+        <ul>
+          <li><code>/dev/tty1</code> - the first virtual console</li>
+          <li><code>/dev/pts/0</code> - the first pseudoterminal device</li>
+        </ul>
+      </li>
+      <li>
+        <code>/dev/tty</code> - the controlling terminal of the current process
+      </li>
+      <li>use <code>getty</code> to launch a virtual console?</li>
+      <li>
+        force changing console: <code># chvt 1</code> - switch to
+        <code>tty1</code>
+      </li>
+    </ul>
+    <h4 id="audio-devices-dev-snd-dev-dsp-dev-audio-etc">
+      Audio Devices: <code>/dev/snd/*</code>, <code>/dev/dsp</code>,
+      <code>/dev/audio</code>, etc
+    </h4>
+    <ul>
+      <li>
+        Two sets of audio devices
+        <ul>
+          <li>
+            <strong>Advanced Linux Sound Architecture (ALSA)</strong> - in
+            <code>/dev/snd/</code>
+          </li>
+          <li>
+            <strong>Open Sound System (OSS)</strong>
+            <ul>
+              <li>
+                computer will play any WAV file sent to <code>/dev/dsp</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="device-file-creation">Device File Creation</h4>
+    <ul>
+      <li>
+        You normally do <em>NOT</em> create device files
+        <ul>
+          <li>
+            created by <strong>devtmpfs</strong> and <strong>udev</strong>
+          </li>
+        </ul>
+      </li>
+      <li>
+        To manually create:
+        <ul>
+          <li>
+            <code>mknod</code> - creates one device
+            <ul>
+              <li>
+                <code># mknod /dev/sda1 b 8 1</code>
+                <ul>
+                  <li>block</li>
+                  <li>major number 8</li>
+                  <li>minor number 1</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        Each system has a <code>MAKEDEV</code> program in <code>/dev/</code> to
+        create groups of devices
+      </li>
+    </ul>
+    <h3 id="udev">udev</h3>
+    <h4 id="devtmpfs">devtmpfs</h4>
+    <ul>
+      <li>
+        the <strong>devtmpfs filesystem</strong> developed in response to the
+        problem of device availability during boot
+      </li>
+      <li>
+        kernel create device files as necessary, but also notifies udevd a new
+        device is available
+      </li>
+      <li>
+        udevd, upon receiving the signal, does <em>not</em> create the device
+        files, but
+        <ul>
+          <li>performs device initialization</li>
+          <li>sets permissions</li>
+          <li>notifies other processes that new devices are available</li>
+          <li>
+            creates a number of symbolic links in <code>/dev/</code>
+            <ul>
+              <li>look for them in <code>/dev/disk/by-id/</code></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        the <strong>tmp</strong> in devtmpfs:
+        <ul>
+          <li>the filesystem resides in main memory,</li>
+          <li>with read/write capability by user-space processes</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="udevadm">udevadm</h4>
+    <ul>
+      <li>admin tool for udevd</li>
+      <li>search for and explore system devices</li>
+      <li>monitor uevents as udevd receives them from kernel</li>
+    </ul>
+    <h4 id="device-monitoring">Device Monitoring</h4>
+    <ul>
+      <li><code>udevadm monitor</code></li>
+      <li>
+        <code>udevadm monitor --kernel --subsystem-match=scsi</code>
+        <ul>
+          <li>
+            see only kernel messages pertaining to changes in SCSI subsystem
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>udisksd</strong> - daemon that listens for events in order to
+        <ul>
+          <li>automatically attach disks</li>
+          <li>notify other processes that new disks are available</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="scsi-and-linux-kernel">SCSI and Linux Kernel</h3>
+    <ul>
+      <li>computer &lt;-&gt; SCSI Host Aapter &lt;-&gt; Devices</li>
+      <li>
+        <strong>Serial Attached SCSI (SAS)</strong>
+        <ul>
+          <li>newer version of SCSI</li>
+          <li>better performance</li>
+        </ul>
+      </li>
+      <li>Most likely USB storage devices that use SCSI commands</li>
+      <li>
+        SATA disks appear as SCSI devices
+        <ul>
+          <li>but most of them communicate through a translation layer</li>
+        </ul>
+      </li>
+      <li>
+        NVMe devices are <em>NOT</em> SCSI
+        <ul>
+          <li>
+            but they could show up in <code>lsscsi</code> as adapter number
+            <code>N</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        For any given device file on the system, kernel
+        <em>almost always</em> uses
+        <ul>
+          <li>one top-layer driver, and</li>
+          <li>one lower-layer driver</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="usb-storage-and-scsi">USB Storage and SCSI</h4>
+    <ul>
+      <li>
+        Linux kernel includes a three-layer USB subsystem closely resembling the
+        SCSI subsystem
+        <ul>
+          <li>device-class driver</li>
+          <li>bus management core</li>
+          <li>host controller driver</li>
+        </ul>
+      </li>
+      <li><code>lsusb</code></li>
+    </ul>
+    <h4 id="generic-scsi-devices">Generic SCSI Devices</h4>
+    <ul>
+      <li><code>lsscsi -g</code></li>
+    </ul>
+    <h2 id="disks-and-filesystems">Disks And Filesystems</h2>
+    <ul>
+      <li>
+        <strong>partition table</strong>
+        <ul>
+          <li>where partitions are defined</li>
+          <li>a.k.a. <strong>disk label</strong></li>
+        </ul>
+      </li>
+      <li><strong>Logical Volume Manager (LVM)</strong></li>
+    </ul>
+    <h3 id="partitioning-disk-devices">Partitioning Disk Devices</h3>
+    <ul>
+      <li>
+        traditionally, partition table is inside
+        <strong>Master Boot Record (MBR)</strong>
+      </li>
+      <li>
+        newer systems use
+        <strong>Globally Unique Identifier Table (GPT)</strong>
+      </li>
+      <li><code>parted</code> &amp; <code>fdisk</code></li>
+    </ul>
+    <h4 id="mbr">MBR</h4>
+    <ul>
+      <li>
+        contains the following partitions:
+        <ul>
+          <li>primary</li>
+          <li>extended</li>
+          <li>logical</li>
+        </ul>
+      </li>
+      <li>
+        MBR has limit of 4 primary partitions
+        <ul>
+          <li>
+            if more needed, one of them needs to be designated as
+            <strong>extended partition</strong>
+          </li>
+        </ul>
+      </li>
+      <li>
+        extended partition breaks down into <strong>logical partitions</strong>
+      </li>
+      <li><code>fdisk -l</code> - view system ID for an MBR</li>
+    </ul>
+    <h4 id="lvm-partitions">LVM Partitions</h4>
+    <ul>
+      <li>partition labeled as LVM - partition type <code>8e</code></li>
+      <li>device named <code>/dev/dm-*</code></li>
+      <li>references to &quot;device mapper&quot;</li>
+    </ul>
+    <h4 id="initial-kernel-read">Initial Kernel Read</h4>
+    <ul>
+      <li>
+        output like: <code>sda: sda1 sda2 &lt; sda 5 &gt;</code>
+        <ul>
+          <li>
+            <code>/dev/sda2</code> is an extended partition containing one
+            logical partition, <code>/dev/sda5</code>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="disk-and-partition-geometry">Disk and Partition Geometry</h4>
+    <ul>
+      <li><strong>cylinder-head-sector</strong></li>
+      <li><strong>Logical Block Addressing (LBA)</strong></li>
+    </ul>
+    <h4 id="ssd">SSD</h4>
+    <ul>
+      <li><strong>partition alignment</strong></li>
+      <li>data read in <strong>chunks</strong></li>
+      <li>
+        check partition boundary: <code>cat /sys/block/sdf/sdf2/start</code>
+      </li>
+    </ul>
+    <h3 id="file-systems">File Systems</h3>
+    <ul>
+      <li><strong>9P</strong> from Plan 9</li>
+      <li>
+        <strong>File System in User Space (FUSE)</strong> - allows user-space
+        filesystems in Linux
+      </li>
+      <li>
+        <strong>VFS (Virtual File System)</strong>
+        <ul>
+          <li>allows Linux to support wide range of filesystems</li>
+        </ul>
+      </li>
+      <li>Use <code>mkfs</code> to create a filesystem</li>
+      <li><code>/mnt</code> - temporary mount point</li>
+      <li>
+        Mount filesystems by UUID
+        <ul>
+          <li><code>blkid</code></li>
+        </ul>
+      </li>
+      <li>Linux <em>buffers</em> writes to the disk</li>
+      <li>
+        when unmounting using <code>unmount</code>, kernel
+        <em>automatically</em> synchronizes with the disk
+        <ul>
+          <li>writes the changes in buffer to the disk</li>
+          <li>can be forced using <code>sync</code></li>
+        </ul>
+      </li>
+      <li>
+        Difference between Unix &amp; DOS text files - how lines end
+        <ul>
+          <li>Unix - only a linefeed <code>\n</code> marks the end of line</li>
+          <li>
+            DOS - carriage return <code>\r</code> <em>followed by</em> linefeed
+            <code>\n</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>/etc/fstab</code>
+        <ul>
+          <li>permanent list of filesystems &amp; options</li>
+          <li>for mounting at boot time</li>
+          <li>maintained by the system</li>
+          <li>
+            Simultaneously mount all entries in <code>/etc/fstab</code>
+            <ul>
+              <li>that do <em>NOT</em> contain <code>noauto</code></li>
+              <li><code># mount -a</code></li>
+            </ul>
+          </li>
+          <li>
+            options:
+            <ul>
+              <li><code>errors</code></li>
+              <li><code>noauto</code></li>
+              <li><code>user</code></li>
+              <li><code>defaults</code></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>df</code> - view size &amp; utilization of the currently mounted
+        filesystems
+        <ul>
+          <li><code>df &lt;dir&gt;</code></li>
+          <li>e.g. <code>df .</code> - device holding the current directory</li>
+          <li>
+            normally a certain percent (5%) of the total
+            <strong>capacity</strong> is unaccounted for
+            <ul>
+              <li><strong>reserved</strong> blocks</li>
+              <li><em>only</em> superuser can use</li>
+              <li>
+                prevents system servers from immediately failing when run out of
+                disk space
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>du</code> - disk usage of <em>every</em> directory in the
+        directory hierarchy
+      </li>
+      <li>
+        POSIX defines a block size of <strong>512</strong> bytes
+        <ul>
+          <li>
+            by default <code>df</code> and <code>du</code> output in 1024-byte
+            blocks
+          </li>
+          <li>use <code>POSIXLY_CORRECT</code> to display in 512-byte</li>
+        </ul>
+      </li>
+      <li>
+        <code>fsck</code> - filesystem check
+        <ul>
+          <li><code>e2fsck</code> for ext2/ext3/ext4</li>
+          <li>
+            <em>NEVER</em> use <code>fsck</code> on a
+            <em>mounted</em> filesystem!!!
+          </li>
+          <li>
+            <code>fsck -p</code> - auto fix ordinary problems
+            <ul>
+              <li>run by Linux at boot time</li>
+            </ul>
+          </li>
+          <li>
+            <code>fsck -n</code> - check the filesystem
+            <em>without</em> modifying anything
+          </li>
+        </ul>
+      </li>
+      <li>
+        normally <code>ext3</code> &amp; <code>ext4</code> do not need to be
+        checked manually
+        <ul>
+          <li>because they have <strong>journals</strong></li>
+        </ul>
+      </li>
+      <li>
+        <code>debugfs</code> - look through files on the filesystem and copy
+        them elsewhere
+        <ul>
+          <li>opens filesystem in read-only mode</li>
+        </ul>
+      </li>
+      <li>
+        Special filesystems
+        <ul>
+          <li><code>proc</code> - mounted on <code>/proc</code></li>
+          <li><code>sysfs</code> - mounted on <code>/sys</code></li>
+          <li><code>tmpfs</code> - mounted on <code>/run</code> and others</li>
+          <li><code>squashfs</code> - <code>/snap</code></li>
+          <li><code>overlay</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="swap-space">Swap Space</h3>
+    <ul>
+      <li>
+        Pieces of idle programs swapped to the disk in exchange for active
+        pieces residing on disk
+      </li>
+      <li>
+        <strong>swap space</strong> - disk area used to store memory pages
+      </li>
+      <li><code>free</code> - current swap usage in kb</li>
+    </ul>
+    <h4 id="determine-how-much-swap-you-need">
+      Determine How Much Swap You Need
+    </h4>
+    <ul>
+      <li>Twice as real memory</li>
+    </ul>
+    <h3 id="logical-volume-manager">Logical Volume Manager</h3>
+    <ul>
+      <li><code>lvm</code></li>
+      <li><code>vgs</code> - shows the volumes groups currently configured</li>
+      <li><code>lvs</code> - show logical volumes</li>
+      <li>
+        Once set up, logical volume block devices are available at
+        <ul>
+          <li><code>/dev/dm-0</code></li>
+          <li><code>/dev/dm-1</code></li>
+          <li>so on...</li>
+        </ul>
+      </li>
+      <li>
+        <code>/dev/mapper/</code> - additional location for symbolic links
+      </li>
+    </ul>
+    <h3 id="disk-and-user-space">Disk and User Space</h3>
+    <ul>
+      <li>Kernel handles raw block I/O from devices</li>
+      <li>
+        User-space tools use the block I/O through device files
+        <ul>
+          <li>but <em>only</em> for initializing operations</li>
+          <li>partitioning</li>
+          <li>filesystem creation</li>
+          <li>swap space creation</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="inside-a-traditional-filesystem">
+      Inside a Traditional Filesystem
+    </h3>
+    <ul>
+      <li>
+        Two primary components:
+        <ul>
+          <li>pool of data blocks - to store data</li>
+          <li>
+            database system that manages the data pool
+            <ul>
+              <li><strong>inode</strong> data structure</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>inode</strong>
+        <ul>
+          <li>a set of data that describes a particular file</li>
+        </ul>
+      </li>
+      <li>
+        for any ext2/3/4 filesystem, start at inode <code>#2</code>, the
+        <strong>root node</strong>
+      </li>
+      <li><code>ls -i</code> - view inode numbers</li>
+      <li><strong>unlinking</strong></li>
+      <li>
+        <strong>block bitmap</strong>
+        <ul>
+          <li>
+            for the filesystem to determine which blocks are in use and which
+            are free
+          </li>
+          <li>0 is free</li>
+          <li>1 is in use</li>
+        </ul>
+      </li>
+      <li>
+        when checking a filesystem, <code>fsck</code> walks through the inode
+        table and directory structure
+        <ul>
+          <li>generates new link counts and a new block bitmap</li>
+          <li>compares with the filesystem on disk</li>
+          <li>
+            make orphans in the filesystem&#39;s
+            <code>lost+found</code> directory
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="how-linux-kernel-boots">How Linux Kernel Boots</h2>
+    <h3 id="overview">Overview</h3>
+    <ol>
+      <li>Machine&#39;s BIOS or boot firmware loads &amp; runs boot loader</li>
+      <li>
+        Boot loader finds the kernel image on disk, loads it into
+        <em>memory</em>, and starts it
+      </li>
+      <li>Kernel initializes devices and drivers</li>
+      <li>Kernel mounts the root filesystem</li>
+      <li>
+        Kernel starts the <code>init</code> program, with PID of 1 -
+        <strong>user space start</strong>
+      </li>
+      <li><code>init</code> sets rest of the system processes in motion</li>
+      <li>
+        <code>init</code> at some point starts a process allowing for user log
+        in - usually at (or near) end of boot sequence
+      </li>
+    </ol>
+    <h3 id="startup-messages">Startup Messages</h3>
+    <ul>
+      <li>
+        <code>journalctl</code> - best way to view kernel&#39;s boot &amp;
+        runtime diagnostic messages
+        <ul>
+          <li><code>journalctl -k</code> - for the current boot</li>
+          <li><code>journalctl -b</code> - previous boots</li>
+        </ul>
+      </li>
+      <li>
+        <code>dmesg</code> - view kernel messages in the
+        <strong>kernel ring buffer</strong>
+      </li>
+      <li>
+        <strong>systemd</strong> captures diagnostic messages from startup &amp;
+        runtime that would normally go to the console
+      </li>
+    </ul>
+    <h3 id="kernel-initialization-and-boot-options">
+      Kernel Initialization and Boot Options
+    </h3>
+    <ul>
+      <li>
+        Order:
+        <ol>
+          <li>CPU inspection</li>
+          <li>Memory inspection</li>
+          <li>Device bus discovery</li>
+          <li>Device discovery</li>
+          <li>Auxiliary kernel subsystem setup (networking etc)</li>
+          <li>Root filesystem mount</li>
+          <li>User space start</li>
+        </ol>
+      </li>
+      <li>Example from my <code>journalctl -k</code>:</li>
+    </ul>
+    <pre><code class="lang-bash">Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> Freeing unused decrypted <span class="hljs-string">memory:</span> <span class="hljs-number">2028</span>K
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> Freeing unused kernel image (initmem) <span class="hljs-string">memory:</span> <span class="hljs-number">2956</span>K
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> Write protecting the kernel read-only <span class="hljs-string">data:</span> <span class="hljs-number">24576</span>k
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> Freeing unused kernel image (rodata/data gap) <span class="hljs-string">memory:</span> <span class="hljs-number">988</span>K
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> x86/<span class="hljs-string">mm:</span> Checked W+X <span class="hljs-string">mappings:</span> passed, no W+X pages found.
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span> Run /init <span class="hljs-keyword">as</span> init process
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span>   with <span class="hljs-string">arguments:</span>
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span>     /init
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span>   with <span class="hljs-string">environment:</span>
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span>     HOME=/
+Jan <span class="hljs-number">07</span> <span class="hljs-number">15</span>:<span class="hljs-number">55</span>:<span class="hljs-number">20</span> nixos <span class="hljs-string">kernel:</span>     TERM=Linux
+</code></pre>
+    <h3 id="kernel-parameters">Kernel Parameters</h3>
+    <ul>
+      <li>text-based</li>
+      <li>
+        To view parameters passed to currently running kernel:
+        <code>/proc/cmdline</code>
+      </li>
+      <li>
+        <code>ro</code> - mount root filesystem in read-only mode
+        <ul>
+          <li>easier for <code>fsck</code> to check</li>
+          <li>then remounts root filesystem in read-write mode</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="boot-loaders">Boot Loaders</h3>
+    <ul>
+      <li>
+        Loads the kernel into memory from somewhere on a disk and then starts
+        with a set of kernel parameters
+      </li>
+      <li>
+        To access the disk
+        <ul>
+          <li>
+            uses BIOS (Basic Input/Output System) or
+            <strong>UEFI</strong> (Unified Extensible Firmware Interface)
+          </li>
+          <li>
+            BIOS/UEFI uses <strong>Logical Block Addressing (LBA)</strong> to
+            access attached storage hardware
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="grub">GRUB</h3>
+    <ul>
+      <li>Filesystem navigation</li>
+      <li><code>initrd</code> - filesystem of RAM</li>
+      <li>
+        the GRUB <strong>root</strong>
+        <ul>
+          <li>
+            filesystem where GRUB searches for kernel and RAM filesystem image
+            files
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="uefi">UEFI</h3>
+    <ul>
+      <li><strong>secure boot</strong></li>
+      <li>
+        supports installing <em>multiple</em> boot loaders in the EFI partition
+      </li>
+    </ul>
+    <h3 id="chainloading-other-os">Chainloading Other OS</h3>
+    <ul>
+      <li>provided by GRUB</li>
+    </ul>
+    <h3 id="boot-loader-details">Boot Loader Details</h3>
+    <ul>
+      <li><strong>MBR</strong> &amp; <strong>UEFI</strong></li>
+    </ul>
+    <h4 id="mbr-boot">MBR Boot</h4>
+    <ul>
+      <li><strong>multistage boot loader</strong></li>
+    </ul>
+    <h4 id="uefi-boot">UEFI Boot</h4>
+    <ul>
+      <li>GPT partitioning scheme is part of UEFI</li>
+      <li>
+        always a special VFAT filesystem called
+        <strong>EFI System Partition (ESP)</strong>
+        <ul>
+          <li>contains a directory <strong>EFI</strong></li>
+          <li>mounted at <code>/boot/efi</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="how-user-space-starts">How User Space Starts</h2>
+    <ul>
+      <li>
+        Roughly in the order of:
+        <ol>
+          <li>init</li>
+          <li>essential low-level services - udevd, syslogd, etc</li>
+          <li>network configuration</li>
+          <li>mid- &amp; high-level services (cron, printing, etc)</li>
+          <li>
+            login prompts, GUIs, high-level applications (web servers etc)
+          </li>
+        </ol>
+      </li>
+    </ul>
+    <h3 id="init">init</h3>
+    <ul>
+      <li>main purpose: to start/stop essential service processes</li>
+      <li>standard implementation: <strong>systemd</strong></li>
+      <li><code>/etc/systemd/</code></li>
+    </ul>
+    <h3 id="systemd">systemd</h3>
+    <ul>
+      <li>
+        advanced service management capabilities:
+        <ul>
+          <li>manage file system mounts</li>
+          <li>monitor network connection requests</li>
+          <li>run timers</li>
+        </ul>
+      </li>
+      <li><strong>unit</strong>: each specific function</li>
+      <li><strong>unit type</strong>: each capability</li>
+      <li>
+        Most significant unit types:
+        <ul>
+          <li><strong>service units</strong></li>
+          <li><strong>target units</strong></li>
+          <li><strong>socket units</strong></li>
+          <li><strong>mount units</strong></li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="booting">Booting</h4>
+    <ul>
+      <li>activating a <em>default</em> unit - <code>default.target</code></li>
+      <li><code>systemd-analyze dot</code> - create dependency graph</li>
+    </ul>
+    <h4 id="systemd-config">systemd config</h4>
+    <ul>
+      <li>
+        two main locations:
+        <ul>
+          <li>
+            <strong>system unit</strong>: <code>/lib/systemd/system</code> or
+            <code>/usr/lib/systemd/system</code>
+          </li>
+          <li>
+            <strong>system configuration</strong>:
+            <code>/etc/systemd/system/</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        To check current systemd config search path:
+        <code>systemctl -p UnitPath show</code>
+      </li>
+      <li>Unit files</li>
+    </ul>
+    <h4 id="operation">Operation</h4>
+    <ul>
+      <li>through <code>systemctl</code></li>
+      <li>
+        <code>systemctl list-units</code>
+        <ul>
+          <li>default command</li>
+          <li><code>--full</code></li>
+          <li><code>--all</code></li>
+        </ul>
+      </li>
+      <li>
+        To view <em>all</em> of a unit&#39;s messages:
+        <ul>
+          <li><code>journalctl --unit=&lt;unit_name&gt;</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="systemd-dependencies">systemd dependencies</h4>
+    <ul>
+      <li><code>Requires</code> vs. <code>Wants</code></li>
+    </ul>
+    <h4 id="systemd-on-demand-and-resource-parallelized-startup">
+      systemd on-demand and resource-parallelized startup
+    </h4>
+    <ul>
+      <li>
+        <code>&lt;name&gt;@.service</code> supports
+        <em>multiple simultaneous</em> instances
+      </li>
+    </ul>
+    <h3 id="shutting-down">Shutting Down</h3>
+    <ul>
+      <li>controlled by init</li>
+      <li>
+        if <code>shutdown</code> other than <code>now</code>
+        <ul>
+          <li>creates a <code>/etc/nologin</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="initial-ram-filesystem">Initial RAM Filesystem</h3>
+    <ul>
+      <li><strong>initramfs</strong></li>
+      <li><code>initrd</code></li>
+    </ul>
+    <h2 id="system-time-batch-jobs-and-users">
+      System Time, Batch Jobs, and Users
+    </h2>
+    <ul>
+      <li><code>/etc/</code> - system&#39;s configuration</li>
+    </ul>
+    <h3 id="system-logging">System Logging</h3>
+    <ul>
+      <li>
+        <strong>syslog</strong>
+        <ul>
+          <li>replaced by <strong>journald</strong></li>
+        </ul>
+      </li>
+      <li>
+        <strong>rsyslogd</strong>
+        <ul>
+          <li><code>/etc/rsyslog.conf</code></li>
+        </ul>
+      </li>
+      <li>
+        <code>journalctl</code>
+        <ul>
+          <li><code>journalctl -S -4h</code> - since the last 4hr</li>
+          <li><code>-U</code> - until</li>
+          <li>
+            <code>-u</code> - filter by unit <code>&lt;name&gt;.service</code>
+          </li>
+          <li>
+            <code>journalctl -g &#39;kernel.*memory&#39;</code> - search by text
+          </li>
+          <li><code>journalctl -b</code> - since the start of current boot</li>
+          <li>
+            <code>journalctl -b -1</code> - since the start of previous boot
+          </li>
+          <li><code>-f</code> - print logs as they arrive - live feed</li>
+        </ul>
+      </li>
+      <li><code>logrotate</code></li>
+    </ul>
+    <h3 id="structure-of-etc-">Structure of <code>/etc/</code></h3>
+    <ul>
+      <li>for system configuration files</li>
+      <li>
+        Guideline: customizable configurations for a single machine
+        <ul>
+          <li>user information, <code>/etc/passwd</code></li>
+          <li>network details <code>/etc/network</code></li>
+        </ul>
+      </li>
+      <li>
+        Nowadays passwords are stored in the <strong>shadow</strong> file,
+        <code>/etc/shadow</code>
+      </li>
+      <li><strong>pseudo-users</strong>: users that cannot log in</li>
+      <li><strong>Pluggable Authentication Modules (PAM)</strong></li>
+      <li>
+        To add/remove users,
+        <ul>
+          <li><code>adduser</code></li>
+          <li><code>userdel</code></li>
+        </ul>
+      </li>
+      <li>
+        To <em>directly</em> edit <code>/etc/passwd</code>
+        <ul>
+          <li>
+            <code>vipw</code> - backs up and locks <code>/etc/passwd</code>
+          </li>
+          <li>
+            <code>vipw -s</code> - modifies <code>/etc/shadow</code> directly
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="-getty-"><code>getty</code></h3>
+    <ul>
+      <li>attaches to terminals and displays a login prompt</li>
+      <li>
+        After entering the login name,
+        <ul>
+          <li>
+            <code>getty</code> replaces itself with <code>login</code> program,
+            asking for password
+          </li>
+          <li>
+            if correct password entered, <code>login</code> replaces itself
+            (using <code>exec()</code>) with your shell
+          </li>
+        </ul>
+      </li>
+      <li>
+        Much of the <code>login</code> program&#39;s real authentication work is
+        handled by <strong>PAM</strong>
+      </li>
+    </ul>
+    <h3 id="time">Time</h3>
+    <ul>
+      <li><strong>system clock</strong> - maintained by kernel</li>
+      <li>
+        <strong>Real-Time Clock (RTC)</strong>
+        <ul>
+          <li>battery-backed</li>
+          <li>included in PC hardware</li>
+          <li>kernel sets its time based on RTC at boot time</li>
+        </ul>
+      </li>
+      <li><strong>time drift</strong> - corrected by <code>adjtimex</code></li>
+      <li><code>tzselect</code></li>
+      <li>
+        <strong>Network Time Protocol (NTP)</strong>
+        <ul>
+          <li>
+            used to be handled by <strong>ntpd</strong> daemon, but replaced by
+            systemd&#39;s <strong>timesyncd</strong>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="scheduling-recurring-tasks-with-cron-and-timer-units">
+      Scheduling Recurring Tasks with cron and Timer Units
+    </h3>
+    <ul>
+      <li>
+        systemd&#39;s <strong>timer units</strong> are alternative to cron
+      </li>
+    </ul>
+    <h3 id="-at-"><code>at</code></h3>
+    <ul>
+      <li>run job <em>once</em> in the future</li>
+      <li><code>atq</code> - check the scheduled job</li>
+      <li>to remove scheduled jobs, <code>atrm</code></li>
+      <li><code>systemd-run</code></li>
+    </ul>
+    <h3 id="timer-units-running-as-regular-users">
+      Timer Units Running as Regular Users
+    </h3>
+    <ul>
+      <li><code>systemd-run --user</code></li>
+      <li>
+        to keep the user manager around after logging out:
+        <code>loginctl enable-linger</code>
+      </li>
+    </ul>
+    <h3 id="user-access">User Access</h3>
+    <ul>
+      <li>
+        <strong>effective user ID (euid)</strong> vs.
+        <strong>real user ID (ruid)</strong>
+        <ul>
+          <li>
+            euid: access rights for a process (e.g. file permissions)
+            <ul>
+              <li><em>actor</em> of a process</li>
+            </ul>
+          </li>
+          <li>
+            ruid: who initiated a process
+            <ul>
+              <li><em>owner</em> of a process</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        when a setuid program is being run, Linux sets euid to the program&#39;s
+        owner during execution
+      </li>
+      <li>
+        <code>sudo</code> (and many other setuid programs) explicitly change the
+        euid <em>and</em> ruid with one of the <code>setuid()</code> syscalls
+      </li>
+    </ul>
+    <h3 id="pluggable-authentication-modules">
+      Pluggable Authentication Modules
+    </h3>
+    <ul>
+      <li>by Sun</li>
+      <li>dynamically loadable <strong>authentication modules</strong></li>
+    </ul>
+    <h2 id="processes-and-resource-utilization">
+      Processes And Resource Utilization
+    </h2>
+    <h3 id="tracking-processes">Tracking Processes</h3>
+    <ul>
+      <li>
+        <code>top</code>
+        <ul>
+          <li>send keystrokes within <code>top</code> to change view</li>
+          <li><em>case-sensitive</em></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="finding-open-files-with-lsof-">
+      Finding Open Files with <code>lsof</code>
+    </h3>
+    <ul>
+      <li><code>lsof</code> - list open files and processes using them</li>
+    </ul>
+    <h3 id="tracing-program-execution-and-system-calls">
+      Tracing Program Execution and System Calls
+    </h3>
+    <ul>
+      <li>
+        <code>strace</code> - system call trace
+        <ul>
+          <li>
+            begins working on the <em>new</em> process (the copy of the original
+            process) just after the <code>fork()</code> call
+          </li>
+          <li>can be used on daemons that fork/detach themselves</li>
+        </ul>
+      </li>
+      <li>
+        <code>ltrace</code> - library trace
+        <ul>
+          <li>does <em>not</em> track anything on kernel level</li>
+          <li>many <em>more</em> shared lib calls than sys calls</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="threads">Threads</h3>
+    <ul>
+      <li>
+        <em>all</em> threads inside a single process share their system
+        resources and <em>some</em> memory
+      </li>
+      <li>
+        separate processes <em>usually</em> do <em>not</em> share system
+        resources
+        <ul>
+          <li>memory</li>
+          <li>I/O</li>
+        </ul>
+      </li>
+      <li>
+        multiple threads (within a process) can run <em>simultaneously</em> on
+        multiple processors
+      </li>
+      <li>threads start <em>faster</em> than processes</li>
+      <li>
+        threads (within a process) intercommunicate faster
+        <ul>
+          <li>shared memory</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="viewing-threads">Viewing Threads</h4>
+    <ul>
+      <li>
+        <code>ps</code> and <code>top</code> by default <em>only</em> show
+        processes
+        <ul>
+          <li><code>ps m</code> to show threads</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="resource-monitoring">Resource Monitoring</h3>
+    <ul>
+      <li>
+        <code>top -p &lt;pid1&gt; [-p pid2 ...]</code> - monitor one/more
+        specific processes <em>over time</em>
+      </li>
+      <li>
+        <code>time</code> - how much CPU time a command uses during its lifetime
+        <ul>
+          <li>system&#39;s version: <code>/usr/bin/time</code></li>
+        </ul>
+      </li>
+      <li>
+        <code>user</code> - number of seconds the CPU has spent during the
+        program&#39;s own code
+      </li>
+      <li>
+        <code>sys</code>/<code>system</code> - how much time the kernel spends
+        doing the process&#39;s work
+      </li>
+      <li>
+        <code>real</code> - <strong>elapsed time</strong>
+        <ul>
+          <li>total time from start to finish</li>
+          <li>including CPU time doing other tasks</li>
+        </ul>
+      </li>
+      <li>
+        <code>top</code>
+        <ul>
+          <li><code>PR</code> column - priority</li>
+          <li>nice value - how nice you are being to other processes</li>
+        </ul>
+      </li>
+      <li><code>renice &lt;nice_value&gt; &lt;pid&gt;</code></li>
+      <li>
+        <strong>load average</strong>
+        <ul>
+          <li>average number of processes currently ready to run</li>
+          <li>
+            if it&#39;s <code>1</code>, a single process is probably using the
+            CPU nearly all of the time
+          </li>
+        </ul>
+      </li>
+      <li>
+        To check memory usage status:
+        <ul>
+          <li><code>free</code></li>
+          <li>
+            view <code>/proc/meminfo</code> - how much memory is being used for
+            caches and buffers
+          </li>
+        </ul>
+      </li>
+      <li>
+        How memory works
+        <ul>
+          <li>
+            CPU has a memory management unit (MMU) to add flexibility to memory
+            access
+          </li>
+          <li>
+            kernel assists MMU by breaking down the memory
+            <em>used by processes</em> into smaller chunks,
+            <strong>pages</strong>
+          </li>
+          <li>
+            kernel maintains <strong>page table</strong>
+            <ul>
+              <li>
+                mapping a process&#39;s virtual page addresses to real page
+                addresses in memory
+              </li>
+            </ul>
+          </li>
+          <li>
+            as process accessing memory, MMU translates the virtual addresses
+            (used by process) into real addresses based on the kernel&#39;s page
+            table
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>on-demand paging</strong>, a.k.a. <strong>demand paging</strong>
+        <ul>
+          <li>kernel loads &amp; allocates pages as a process needs them</li>
+        </ul>
+      </li>
+      <li>
+        <code>getconf PAGE_SIZE</code> - system&#39;s page size
+        <ul>
+          <li><code>4096</code>, or 4k, on most Linux distros</li>
+        </ul>
+      </li>
+      <li>
+        Page faults
+        <ul>
+          <li>minor</li>
+          <li>
+            major
+            <ul>
+              <li>
+                might occur when kernel needs to load the program from the disk
+                (swap) the first time
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><code>vmstat</code></li>
+      <li><code>iostat</code></li>
+      <li>
+        <code>iotop</code> - I/O resources used by individual processes
+        <ul>
+          <li>processes using the most I/O</li>
+          <li>displays <em>threads</em> instead of processes</li>
+          <li>
+            scheduling classes:
+            <ul>
+              <li>
+                <code>be</code> - best effort, where most processes run under
+              </li>
+              <li>
+                <code>rt</code> - real-time, higher priority than any other
+                class
+              </li>
+              <li><code>idle</code></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><code>ionice</code> - change I/O priority</li>
+      <li>
+        <code>pidstat</code> - monitor resource consumption of a process
+        <em>over time</em>
+      </li>
+    </ul>
+    <h3 id="control-groups">Control Groups</h3>
+    <ul>
+      <li>
+        <strong>cgroup</strong> - a kernel feature
+        <ul>
+          <li>in kernel space</li>
+          <li>does <em>NOT</em> depend on systemd</li>
+        </ul>
+      </li>
+      <li>
+        <strong>controllers</strong> - how the processes within one cgroup
+        behave
+        <ul>
+          <li><code>cpu</code></li>
+          <li><code>memory</code></li>
+        </ul>
+      </li>
+      <li><code>/proc/&lt;pid&gt;/cgroup</code> - view the cgroup file</li>
+      <li><code>/sys/fs/cgroup/</code> - view cgroups</li>
+      <li>
+        see the current resource utilization in this cgroup -
+        <code>cat cpu.stat</code>
+      </li>
+    </ul>
+    <h2 id="network-and-its-configuration">Network and Its Configuration</h2>
+    <h3 id="packets">Packets</h3>
+    <ul>
+      <li>
+        <strong>packet</strong>
+        <ul>
+          <li><strong>header</strong></li>
+          <li><strong>payload</strong></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="network-layers">Network Layers</h3>
+    <ul>
+      <li>
+        in Linux, <strong>transport layer</strong> and all layers below are
+        <em>primarily</em> handled by the kernel
+      </li>
+    </ul>
+    <h3 id="internet-layer">Internet Layer</h3>
+    <ul>
+      <li>
+        <code>ip address show</code> - to view your IP
+        <ul>
+          <li>look at <code>inet</code> for IPv4 address</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Classless Inter-Domain Routing (CIDR)</strong>
+        <ul>
+          <li>number of <em>leading</em> <code>1</code>s in the subnet mask</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="routes-and-the-kernel-routing-table">
+      Routes and the Kernel Routing Table
+    </h3>
+    <ul>
+      <li><code>ip route show</code> - to view the routing table</li>
+    </ul>
+    <h3 id="default-gateway">Default Gateway</h3>
+    <ul>
+      <li>
+        <code>default</code> in the routing table - matches <em>any</em> address
+        on Internet
+        <ul>
+          <li><code>0.0.0.0/24</code> for IPv4</li>
+        </ul>
+      </li>
+      <li>
+        <strong>default gateway</strong> - as intermediary for the default route
+      </li>
+      <li>
+        kernel <em>always</em> picks the route with the longest destination
+        prefix that matches
+        <ul>
+          <li>CIDR</li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="ipv6">IPv6</h3>
+    <ul>
+      <li><strong>subnet</strong> &amp; <strong>interface ID</strong></li>
+      <li>
+        Hosts normally have <em>at least two addresses</em>
+        <ul>
+          <li><strong>global unicast address</strong></li>
+          <li><strong>link-local address</strong></li>
+        </ul>
+      </li>
+      <li>
+        <code>ip -6 address show</code>
+        <ul>
+          <li><code>scope global</code></li>
+          <li><code>scope link</code></li>
+        </ul>
+      </li>
+      <li><code>ip -6 route show</code></li>
+    </ul>
+    <h3 id="icmp-and-dns">ICMP and DNS</h3>
+    <ul>
+      <li><code>ping</code> - send ICMP echo request</li>
+      <li><code>host</code> - find the IP behind a domain name</li>
+    </ul>
+    <h3 id="kernel-network-interfaces">Kernel Network Interfaces</h3>
+    <ul>
+      <li><strong>predictable network interface device</strong></li>
+      <li>
+        at boot time, interfaces have traditional names <code>eth0</code> and
+        <code>wlan0</code>
+        <ul>
+          <li>but quickly renamed on systemd machines</li>
+        </ul>
+      </li>
+      <li><strong>link/ether</strong> - MAC address</li>
+    </ul>
+    <h3 id="resolving-hostnames">Resolving Hostnames</h3>
+    <ul>
+      <li>DNS is in the application layer, entirely user space</li>
+      <li>
+        check for manual override in <code>/etc/hosts</code>,
+        <em>before</em> going DNS
+      </li>
+      <li>
+        <code>/etc/resolv.conf</code>
+        <ul>
+          <li>traditional config file for DNS server</li>
+        </ul>
+      </li>
+      <li>
+        DNS caching
+        <ul>
+          <li>
+            <code>systemd-resolved</code> - routers acting as name servers
+          </li>
+          <li>BIND - the standard Unix name server daemon</li>
+        </ul>
+      </li>
+      <li><code>resolvectl status</code> - check the current DNS settings</li>
+      <li>
+        <code>/etc/nsswitch.conf</code>
+        <ul>
+          <li>
+            traditional interface for controlling several name-related
+            precedence settings
+          </li>
+          <li><code>hosts: files dns</code></li>
+          <li>make sure <code>/etc/hosts</code> is as short as possible</li>
+          <li>
+            RULE:
+            <blockquote>
+              <p>
+                If a particular host has a DNS entry, it has <em>NO</em> place
+                in <code>/etc/hosts</code>
+              </p>
+            </blockquote>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="localhost">Localhost</h3>
+    <ul>
+      <li>
+        <code>lo</code> - virtual network interface, <strong>loopback</strong>
+      </li>
+    </ul>
+    <h3 id="tcp-and-udp">TCP and UDP</h3>
+    <ul>
+      <li>
+        <code>netstat -nt</code> - view active connections
+        <ul>
+          <li><code>-n</code> - disables DNS</li>
+          <li><code>-t</code> - limits output to TCP</li>
+        </ul>
+      </li>
+      <li><code>/etc/services</code> - file for well known ports</li>
+      <li>
+        on Linux, <em>only</em> processes running as <em>superuser</em> can use
+        ports 1 through 1023
+      </li>
+      <li>
+        UDP
+        <ul>
+          <li>defines transport <em>only</em> for single messages</li>
+          <li><em>NO</em> data stream</li>
+          <li>has ports</li>
+          <li><em>NO</em> connections</li>
+          <li>
+            <em>does</em> have error detection <em>inside</em> a packet
+            <ul>
+              <li>but does <em>NOT</em> have to do anything about it</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="dhcp">DHCP</h3>
+    <ul>
+      <li>
+        You get:
+        <ul>
+          <li>IP address</li>
+          <li>subnet mask</li>
+          <li>default gateway</li>
+          <li>DNS server</li>
+        </ul>
+      </li>
+      <li>
+        when making an initial DHCP request, a host <em>broadcasts</em> the
+        request to <em>all</em> hosts (on its physical network)
+        <ul>
+          <li>since it does not know the address of its DHCP server</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="linux-dhcp-clients">Linux DHCP Clients</h4>
+    <ul>
+      <li>
+        <code>dhclient</code> - traditional
+        <ul>
+          <li>stores its PID in <code>/var/run/dhclient.pid</code></li>
+          <li>
+            stores lease info in <code>/var/lib/dhcp/dhclient.leases</code>
+          </li>
+        </ul>
+      </li>
+      <li>systemd-networkd has a built-in DHCP client</li>
+    </ul>
+    <h3 id="ethernet-ip-arp-and-ndp">Ethernet, IP, ARP, and NDP</h3>
+    <ul>
+      <li>
+        <strong>Address Resolution Protocol (ARP)</strong>
+        <ul>
+          <li>maintains a small table, ARP cache</li>
+          <li>maps IP addresses to MAC addresses</li>
+          <li>in the kernel</li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="network-applications-and-services">
+      Network Applications and Services
+    </h2>
+    <ul>
+      <li>
+        <code>lsof</code> - list programs currently using or listening to ports
+        <ul>
+          <li><code>-n</code> - disable resolution</li>
+          <li><code>lsof -i:&lt;port&gt;</code> - filter by port</li>
+          <li>
+            <code>lsof -i&lt;protocol&gt;@&lt;host&gt;:&lt;port&gt;</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>tcpdump</code>
+        <ul>
+          <li>
+            puts the network interface card into
+            <strong>promiscuous mode</strong>
+          </li>
+          <li>reports on every packet that comes across</li>
+          <li><code>tcpdump tcp</code></li>
+          <li>Wireshrak - GUI alternative</li>
+        </ul>
+      </li>
+      <li><code>netcat</code> or <code>nc</code></li>
+      <li>
+        <code>nmap</code> - network mapper
+        <ul>
+          <li>
+            scans <em>all</em> ports on a machine or network of machines,
+            looking for open ports
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="remote-procedure-calls">Remote Procedure Calls</h3>
+    <ul>
+      <li><strong>RPC</strong> - remote procedure call</li>
+      <li>
+        where a client program calls functions that execute on a remote server
+      </li>
+    </ul>
+    <h3 id="network-security">Network Security</h3>
+    <ul>
+      <li>
+        The following services should <em>always</em> be deactivated:
+        <ul>
+          <li><strong>ftpd</strong></li>
+          <li><strong>telnetd</strong></li>
+          <li><strong>rlogind</strong></li>
+          <li><strong>rexecd</strong></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="network-sockets">Network Sockets</h3>
+    <ul>
+      <li>
+        On Unix, a process uses a <strong>socket</strong> to identify when &amp;
+        how it&#39;s talking to the network
+      </li>
+      <li>
+        <strong>sockets</strong> - the interface that processes use to access
+        the network through kernel
+        <ul>
+          <li>boundary between user space &amp; kernel space</li>
+        </ul>
+      </li>
+      <li><code>SOCK_STREAM</code> - stream sockets for TCP</li>
+      <li><code>SOCK_DGRAM</code> - datagram sockets for UDP</li>
+    </ul>
+    <h3 id="unix-domain-sockets">Unix Domain Sockets</h3>
+    <ul>
+      <li>special kind of socket</li>
+      <li>
+        when a process connects to a Unix domain socket,
+        <ul>
+          <li>it can listen for and accept connections on the socket</li>
+        </ul>
+      </li>
+      <li>
+        <em>NOT</em> a network socket
+        <ul>
+          <li><em>NO</em> network behind it</li>
+        </ul>
+      </li>
+      <li><strong>D-BUS</strong></li>
+      <li><code>lsof -U</code> - view Unix domain sockets currently in use</li>
+    </ul>
+    <h2 id="network-file-transfer-and-sharing">
+      Network File Transfer and Sharing
+    </h2>
+    <h3 id="quick-copy">Quick Copy</h3>
+    <ul>
+      <li><code>python -m SimpleHTTPServer</code></li>
+      <li>
+        <code
+          >scp -r &lt;directory&gt;
+          &lt;user&gt;@&lt;remote_host&gt;[:dest_dir]</code
+        >
+      </li>
+    </ul>
+    <h3 id="rsync">rsync</h3>
+    <ul>
+      <li>
+        <code>rsync -nva dir host:dest_dir</code> - copy a directory to a
+        different dir on remote host
+        <ul>
+          <li><code>-a</code> - all files</li>
+          <li><code>-n</code> - dry run mode</li>
+          <li><code>-v</code> - verbose</li>
+        </ul>
+      </li>
+      <li>
+        <em>NOTE</em> the different between slash and no-slash!
+        <ul>
+          <li><code>dir</code> vs <code>dir/</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="sshfs">SSHFS</h3>
+    <ul>
+      <li>
+        <code>sshfs username@host:dir mountpoint</code>
+        <ul>
+          <li>user-space filesystem</li>
+          <li>to unmount: <code>fusermount -u &lt;mountpoint&gt;</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="nfs">NFS</h3>
+    <ul>
+      <li>
+        commonly used traditional systems for file sharing among UNIX systems
+      </li>
+      <li>can be served over TCP &amp; UDP</li>
+    </ul>
+    <h2 id="user-env">User Env</h2>
+    <ul>
+      <li>
+        <code>/usr/bin/</code> - where most Linux distros install executables
+      </li>
+      <li>
+        For a user&#39;s own shell scripts
+        <ul>
+          <li><code>$HOME/bin</code></li>
+          <li><code>$HOME/.local/bin</code></li>
+        </ul>
+      </li>
+      <li>
+        You should <em>NEVER</em> put a dot (<code>.</code>) at the
+        <em>front</em> of the path
+      </li>
+      <li><code>$MANPATH</code></li>
+      <li><strong>login shell</strong> vs. <strong>non-login shell</strong></li>
+      <li><code>$-</code> - current set of options in the current shell</li>
+      <li><code>tcsh</code></li>
+      <li><code>$PAGER</code> - default to <code>less</code></li>
+      <li>
+        startup file pitfalls
+        <ul>
+          <li>
+            do <em>NOT</em> set <code>$DISPLAY</code> env variable in a shell
+            startup file
+          </li>
+          <li>do <em>NOT</em> set terminal type in a shell startup file</li>
+          <li>
+            <em>NEVER</em> set <code>$LD_LIBRARY_PATH</code> in a shell startup
+            file
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="linux-desktop">Linux Desktop</h2>
+    <h3 id="desktop-components">Desktop Components</h3>
+    <ul>
+      <li>
+        <strong>Framebuffer</strong>
+        <ul>
+          <li>fundamental of any graphical display mechanism</li>
+          <li>
+            a chunk of memory that the graphics hardware reads and transmits to
+            screen for display
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="x-window-system">X Window System</h4>
+    <ul>
+      <li>X <strong>client</strong> programs handle UI</li>
+      <li>
+        X <strong>server</strong> serves as kernel, managing
+        <ul>
+          <li>rendering windows</li>
+          <li>configuring displays</li>
+          <li>handling input from devices</li>
+        </ul>
+      </li>
+    </ul>
+    <h4 id="wayland">Wayland</h4>
+    <ul>
+      <li><strong>decentralized</strong> by design</li>
+      <li>
+        each client gets:
+        <ul>
+          <li>its own memory buffer for its own window</li>
+          <li><strong>compositor</strong></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="wayland">Wayland</h3>
+    <ul>
+      <li>
+        Wayland refers to a <strong>communication protocol</strong> between
+        compositing window manager and graphical client program
+      </li>
+      <li>
+        <code>$WAYLAND_DISPLAY</code> - unix domain socket for communication
+        with clients
+        <ul>
+          <li>found in <code>/run/user/&lt;uid&gt;/</code></li>
+        </ul>
+      </li>
+      <li>
+        <code>libinput</code> - inspect input devices &amp; events as they are
+        presented by kernel
+      </li>
+    </ul>
+    <h4 id="x-compatibility-in-wayland">X Compatibility in Wayland</h4>
+    <ul>
+      <li>
+        Two approaches:
+        <ul>
+          <li>add Wayland support to the app</li>
+          <li>
+            run X app through a compatibility layer in Wayland
+            <ul>
+              <li><code>Xwayland</code></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="x">X</h3>
+    <ul>
+      <li><strong>X display</strong></li>
+      <li>On Linux, X server runs on a virtual terminal</li>
+      <li>
+        can run clients across a network to a server running on a different
+        machine directly over the network
+        <ul>
+          <li>X server listening for TCP connections on port 6000</li>
+        </ul>
+      </li>
+      <li>
+        X Events
+        <ul>
+          <li><code>xev</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="d-bus">D-Bus</h3>
+    <ul>
+      <li><strong>Desktop Bus</strong> - a message-passing system</li>
+      <li>
+        interprocess communication mechanism
+        <ul>
+          <li>allows desktop apps to talk to each other</li>
+        </ul>
+      </li>
+      <li>
+        <code>dbus-daemon</code> - central hub
+        <ul>
+          <li>accepts and retransmits events</li>
+        </ul>
+      </li>
+      <li>
+        Two kinds of <code>dbus-daemon</code> instances (processes)
+        <ul>
+          <li>
+            the <strong>system instance</strong>
+            <ul>
+              <li>started by init at boot time</li>
+              <li>
+                processes connect to it through
+                <code>/var/run/dbus/system_bus_socket</code> UNIX domain socket
+              </li>
+            </ul>
+          </li>
+          <li>
+            the <strong>session instance</strong>
+            <ul>
+              <li>optional</li>
+              <li>runs <em>only when</em> a desktop session is started</li>
+              <li>desktop apps connect to this instance</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="development-tools">Development Tools</h2>
+    <ul>
+      <li>
+        <code>ld</code> - run the linker
+        <ul>
+          <li>creates executable from object files</li>
+          <li>
+            <code>cc -l&lt;lib&gt;</code> - link against a library
+            <ul>
+              <li>
+                note there is no space between <code>-l</code> and
+                <code>&lt;lib&gt;</code>
+              </li>
+            </ul>
+          </li>
+          <li><code>cc -L&lt;non-stardard-lib&gt;</code></li>
+        </ul>
+      </li>
+      <li>
+        <code>nm --defined-only &lt;lib&gt;</code> - search a lib for a
+        particular function
+      </li>
+      <li><code>libc.a</code> - basic file in the standard C lib</li>
+      <li>
+        <code>&lt;lib&gt;.a</code> - <strong>static</strong> library
+        <ul>
+          <li>
+            linker copies necessary machine code from lib file into executable
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>shared</strong> libraries - only <strong>references</strong> to
+        names in the code of the lib file
+        <ul>
+          <li>
+            when program is run, system loads the lib&#39;s code into the
+            process memory space <em>only when</em> necessary
+          </li>
+          <li><code>.so</code></li>
+          <li>
+            <code>ldd &lt;program&gt;</code> - to see what share libs a program
+            uses
+            <ul>
+              <li>
+                output format:
+                <code
+                  >&lt;shared-lib-name&gt; =&gt;
+                  &lt;shared-lib-location&gt;</code
+                >
+              </li>
+            </ul>
+          </li>
+          <li>
+            <code>ld.so</code> - <strong>runtime dynamic linker/loader</strong>
+            <ul>
+              <li>
+                small program that finds &amp; loads shared libs for a program
+                at <em>runtime</em>
+              </li>
+              <li>
+                provides right side of <code>=&gt;</code> from output of
+                <code>ldd</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        How <code>ld.so</code> finds shared libs
+        <ul>
+          <li>
+            first place to look at: executable&#39;s runtime library search path
+            (<strong>rpath</strong>)
+          </li>
+          <li>
+            next: system cache, <code>/etc/ld.so.cache</code>
+            <ul>
+              <li>
+                fast cache of names of lib files found in the
+                <strong>cache configuration file</strong>,
+                <code>/etc/ld.so.conf</code>
+                <ul>
+                  <li>you should <em>NOT</em> modify it</li>
+                </ul>
+              </li>
+              <li>
+                if <code>/etc/ld.so.conf</code> altered, need to rebuild
+                <code>/etc/ld.so.cache</code> by doing <code>ldconfig -v</code>
+              </li>
+            </ul>
+          </li>
+          <li>another place: <code>LD_LIBRARY_PATH</code></li>
+        </ul>
+      </li>
+      <li>
+        To link shared libs
+        <ul>
+          <li>
+            <code
+              >cc -o &lt;exec&gt; &lt;exec.o&gt;
+              -Wl,-rpath=&lt;path-to-shared-lib&gt;
+              -L&lt;path-to-shared-lib&gt;</code
+            >
+          </li>
+          <li>
+            <code>-Wl,-rapth</code> tells linker to include the specified dir
+            into executable&#39;s lib search path
+          </li>
+          <li><code>-L</code> is <em>still</em> needed</li>
+        </ul>
+      </li>
+      <li>
+        <code>patchelf</code> - change the runtime lib search path of an
+        <em>existing</em> binary
+        <ul>
+          <li>although better done at compile time</li>
+          <li><strong>ELF (Executable and Linkable Format)</strong></li>
+        </ul>
+      </li>
+      <li>
+        <em>NEVER</em> set <code>LD_LIBRARY_PATH</code> in shell startup files
+        or when compiling software
+        <ul>
+          <li>if you <em>have to</em> set it, do it in a wrapper script</li>
+        </ul>
+      </li>
+      <li>
+        Working with header (include) files and dirs
+        <ul>
+          <li><code>/usr/include</code> - default include dir</li>
+          <li>
+            <code>cc -c -I/&lt;path-to-include-dir&gt; &lt;file&gt;.c</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>#include &quot;header.h&quot;</code> vs.
+        <code>#include &lt;header.h&gt;</code>
+        <ul>
+          <li>
+            double quotes - the header file is <em>not</em> in a system include
+            directory
+          </li>
+        </ul>
+      </li>
+      <li>
+        Preprocessor
+        <ul>
+          <li>
+            passing the compiler
+            <code>-D&lt;MACRO_NAME&gt;=&lt;value&gt;</code> ===
+            <code>#define &lt;MACRO_NAME&gt; &lt;value&gt;</code>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>Lex</strong>: a <strong>tokenizer</strong> that transforms text
+        into numbered tags with labels
+        <ul>
+          <li><code>flex</code> - the GNU version</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Yacc</strong>: a <strong>parser</strong> that attempts to read
+        tokens according to a <strong>grammar</strong>
+        <ul>
+          <li><code>bison</code> - GNU version</li>
+        </ul>
+      </li>
+    </ul>
+    <h2 id="virtualization">Virtualization</h2>
+    <h3 id="virtual-machines">Virtual Machines</h3>
+    <ul>
+      <li>
+        <strong>system virtual machine</strong>
+        <ul>
+          <li>IBM mainframe</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Hypervisor</strong>
+        <ul>
+          <li>manages one/more virtual machines</li>
+          <li>
+            Two types:
+            <ul>
+              <li>
+                <strong>type 1 hypervisor</strong>
+                <ul>
+                  <li>similar to an OS</li>
+                  <li>with kernel</li>
+                  <li><strong>Xen</strong></li>
+                </ul>
+              </li>
+              <li><strong>type 2 hypervisor</strong></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><strong>host</strong> vs. <strong>guest</strong></li>
+      <li><strong>paravirtualization</strong></li>
+      <li>
+        Virtual machine CPU modes
+        <ul>
+          <li>kernel mode vs. user mode</li>
+          <li>
+            hypervisor can detect &amp; react to (<strong>trap</strong>) any
+            restricted instructions coming from a virtual machine
+          </li>
+          <li>
+            hypervisor can emulate the restricted instructions, enabling VMs to
+            run in kernel mode
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h3 id="containers">Containers</h3>
+    <ul>
+      <li>lighter weight than VM</li>
+      <li>
+        service isolation
+        <ul>
+          <li>
+            <code>chroot()</code> - change root dir to something other than
+            actual sys root
+            <ul>
+              <li><strong>chroot jail</strong></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <strong>container</strong>: a restricted runtime env for a set of
+        processes
+        <ul>
+          <li>
+            the processes <em>cannot</em> touch anything on the system outside
+            the env
+          </li>
+          <li><strong>OS level virtualization</strong></li>
+        </ul>
+      </li>
+      <li>docker vs podman</li>
+    </ul>
+  </body>
+</html>
