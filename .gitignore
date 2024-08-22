@@ -1,2 +1,5 @@
 # Pdf files
 *.pdf
+
+# Executables and build files
+9/dirlist
