@@ -237,24 +237,6 @@ Linux є ядром операційної системи GNU/Linux. Ядро (*
   - Встановлення: `sudo dpkg -i package_file.deb`
   - Видалення: `sudo dpkg -r <package_name>`
 
-### YUM (Yellowdog Updater, Modified)
-
-- використовується в дистрибутивах на базі Red Hat, таких як Fedora і CentOS.
-  - Встановлення: `sudo yum install <package_name>`
-  - Видалення: `sudo yum remove <package_name>`
-  - Оновлення репозиторіїв: `sudo yum check-update`
-  - Оновлення пакетів: `sudo yum update`
-  - Пошук пакетів: `yum search <search_term>`
-
-### DNF (Dandified YUM)
-
-- сучасний менеджер пакетів для дистрибутивів на базі Red Hat.
-  - Встановлення: `sudo dnf install <package_name>`
-  - Видалення: `sudo dnf remove <package_name>`
-  - Оновлення репозиторіїв: `sudo dnf check-update`
-  - Оновлення пакетів: `sudo dnf upgrade`
-  - Пошук пакетів: `dnf search <search_term>`
-
 ### Pacman
 
 - використовується в дистрибутиві Arch Linux і його похідних.
@@ -264,20 +246,18 @@ Linux є ядром операційної системи GNU/Linux. Ядро (*
   - Оновлення пакетів: `sudo pacman -Syu`
   - Пошук пакетів: `pacman -Ss <search_term>`
 
-### ZYpp (ZENworks Package Management)
+### Snap
 
-- використовується в дистрибутиві OpenSUSE.
-  - Встановлення: `sudo zypper install <package_name>`
-  - Видалення: `sudo zypper remove <package_name>`
-  - Оновлення репозиторіїв: `sudo zypper refresh`
-  - Оновлення пакетів: `sudo zypper update`
-  - Пошук пакетів: `zypper search <search_term>`
+- пакетний менеджер, який дозволяє встановлювати пакети з різних джерел та забезпечує їх ізоляцію від інших системних компонентів.
+  - Встановлення: `sudo snap install <package_name>`
+  - Видалення: `sudo snap remove <package_name>`
+  - Оновлення пакетів: `sudo snap refresh`
+  - Пошук пакетів: `snap find <search_term>`
 
-### Portage
+### Brew
 
-- використовується в дистрибутиві Gentoo. Для встановлення пакета використовується команда emerge package_name.
-  - Встановлення: `sudo emerge <package_name>`
-  - Видалення: `sudo emerge --unmerge <package_name>`
-  - Оновлення репозиторіїв: `sudo emerge --sync`
-  - Оновлення пакетів: `sudo emerge --update --deep --newuse @world`
-  - Пошук пакетів: `emerge --search <search_term>`
+- пакетний менеджер для macOS (або Linux), який дозволяє встановлювати та керувати пакетами з відкритих репозиторіїв.
+  - Встановлення: `brew install <package_name>`
+  - Видалення: `brew uninstall <package_name>`
+  - Оновлення пакетів: `brew upgrade`
+  - Пошук пакетів: `brew search <search_term>`
