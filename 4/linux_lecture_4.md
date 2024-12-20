@@ -642,9 +642,9 @@ services; ttys; users; times
 Приклади:
 
 - Боб, можна входити через термінал щодня з 07:00 до 09:00, крім середи:
-  `login; tty*; bob; alth0700-`
+  `login; tty*; bob; MoTuThFrSaSu0700-0900`
 - Без входу, терміналу чи дистанційного входу, окрім root, щодня з 17:30 до 7:45 наступного дня:
-  `login; tty* | pts/*; !root; !wk1730-`
+  `login; tty* | pts/*; !root; Al1730-0745`
 
 #### **pam_nologin**
 
