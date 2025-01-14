@@ -680,3 +680,18 @@ lvs -a -o name,copy_percent,devices my_vg
 ```
 
 Якщо образ метаданих, який з'єднується з вихідним логічним томом, не можна розмістити на тому ж фізичному томі, `lvconvert` не вдасться виконати.
+
+## Відновлення RAID масиву при відмові диска
+
+Якщо один з дисків у масиві RAID відмовить, ви можете відновити масив, замінивши відмовлений диск новим.
+
+Ви можете використати команду `lvconvert` для відновлення масиву RAID після заміни диска.
+
+```bash
+# Припустимо, що /dev/sdb відмовив, і ви замінили його на /dev/sdc
+pvcreate /dev/sdc
+vgreduce --removemissing vg_data
+vgextend vg_data /dev/sdc
+lvconvert --repair /dev/vg_data/lv_raid
+lvs -a -o +devices
+```
