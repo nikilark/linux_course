@@ -676,6 +676,103 @@ sudo systemctl daemon-reload; sudo systemctl restart test.timer
 sudo systemctl stop test.timer; sudo systemctl disable test.timer
 ```
 
+## Працюємо з ".path Unit"
+
+`path` unit в Linux Systemd — це спеціальний тип юніту, який дозволяє запускати інші юніти на основі змін у файловій системі. Він використовує моніторинг наявності або змін в файлах чи каталогах і може автоматично ініціювати відповідний сервіс або таймер.
+
+### Коли використовувати `.path`?
+
+`path` юніт може бути корисний для автоматизації певних дій при створенні чи зміні файлів. Наприклад:
+
+- Запуск скриптів після створення специфічних файлів;
+- Оновлення кешів або інших компонентів, коли відповідний файл або каталог змінюється;
+- Автоматизація процесів при зміні конфігураційних файлів.
+
+### Створюємо `.path` юніт
+
+1. Спочатку перевіряємо, чи є в системі необхідний сервіс:
+
+```bash
+systemctl cat my_service.service
+```
+
+2. Створюємо новий `.path` юніт:
+
+```bash
+sudo vim /etc/systemd/system/my_file_monitor.path
+```
+
+Приклад конфігурації для `path` юніта:
+
+```ini
+[Unit]
+Description=Monitor a specific directory for changes
+
+[Path]
+PathExists=/path/to/monitor
+Unit=my_service.service
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Пояснення опцій
+
+- `PathExists=/path/to/monitor` — вказуємо шлях до файлу чи каталогу, на зміну якого потрібно реагувати.
+- `Unit=my_service.service` — вказуємо сервіс, який буде запущено при зміні файлу або каталогу.
+- `WantedBy=multi-user.target` — дозволяє автоматично активувати цей юніт при старті системи.
+
+### Створюємо сервіс для запуску
+
+Якщо ще не створено сервіс, на який буде посилатися `path` юніт, створюємо його.
+
+```bash
+sudo vim /etc/systemd/system/my_service.service
+```
+
+Приклад конфігурації для сервісу:
+
+```ini
+[Unit]
+Description=Run script when directory changes
+
+[Service]
+ExecStart=/path/to/script.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Перевіряємо і активуємо
+
+1. Перевіряємо конфігурацію:
+
+```bash
+systemctl status my_file_monitor.path
+```
+
+2. Активуємо `.path` юніт:
+
+```bash
+sudo systemctl enable my_file_monitor.path
+sudo systemctl start my_file_monitor.path
+```
+
+3. Перевіряємо, чи працює:
+
+```bash
+systemctl status my_file_monitor.path
+```
+
+### Важливі опції для `.path` юнітів
+
+- `PathExists` — визначає шлях до файлу або каталогу, який має бути моніторингованим.
+- `PathChanged` — відстежує зміни у вказаному файлі.
+- `PathModified` — спрацьовує, коли файл чи каталог змінюється.
+- `Unit` — вказує на юніт, який буде активовано після спрацьовування події.
+
+Цей механізм дозволяє налаштовувати автоматичні процеси в системі, що значно спрощує адміністрування та управління файлами і сервісами.
+
 ## Аналіз і моніторинг
 
 ### Утиліта `systemd-analyze`
